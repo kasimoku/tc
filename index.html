@@ -511,7 +511,7 @@ function renderTimeline(iso,day){
 
     const axis=document.createElement('div');axis.className='tl-axis';
     for(let h=half.startH;h<=half.endH;h++){
-      const tick=document.createElement('div');tick.className='tl-tick';tick.textContent=h<half.endH?`${h}:00`:'';axis.appendChild(tick);
+      const tick=document.createElement('div');tick.className='tl-tick';tick.textContent=h<half.endH?`${h}`:'';axis.appendChild(tick);
     }
     wrap.appendChild(axis);
 
