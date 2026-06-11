@@ -46,9 +46,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .t-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;color:var(--text);font-family:var(--sans);outline:none;width:100%;transition:border-color .15s}
 .t-input:focus{border-color:var(--accent)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.input-group{display:flex;flex-direction:column;gap:5px}
+.input-group{display:flex;flex-direction:column;gap:5px;min-width:0}
 .input-label{font-size:11px;color:var(--text3)}
-.time-inp{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:15px;color:var(--text3);font-family:var(--mono);outline:none;width:100%;transition:border-color .15s}
+.time-inp{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:15px;color:var(--text3);font-family:var(--mono);outline:none;width:100%;max-width:160px;transition:border-color .15s}
 .time-inp:focus{border-color:var(--accent)}
 .time-inp:valid{color:var(--text)}
 
@@ -92,15 +92,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .sch-date-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--text2);transition:all .15s;display:flex;align-items:center}
 .sch-date-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surface2)}
 .sch-date-btn svg{width:14px;height:14px}
-.sch-date-label{font-family:var(--mono);font-size:15px;font-weight:500}
-.sec{font-size:11px;letter-spacing:.12em;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sch-date-label{font-family:var(--mono);font-size:17px;font-weight:500;color:#fff}
+.sec{font-size:13px;letter-spacing:.12em;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .sec::after{content:'';flex:1;height:1px;background:var(--border)}
 
 /* TIMELINE */
 .tl-half{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
-.tl-period{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.08em;margin-bottom:10px}
+.tl-period{font-size:13px;font-family:var(--mono);color:#fff;letter-spacing:.08em;margin-bottom:10px}
 .tl-axis{position:relative;height:14px;margin-bottom:4px}
-.tl-tick{position:absolute;font-size:10px;color:var(--text3);font-family:var(--mono)}
+.tl-tick{position:absolute;font-size:12px;color:#fff;font-family:var(--mono)}
 .tl-track{position:relative;height:32px;background:var(--surface2);border-radius:8px;margin-bottom:10px;cursor:crosshair;overflow:hidden}
 .tl-gridlines{position:absolute;inset:0;display:flex;pointer-events:none;border-radius:8px;overflow:hidden}
 .tl-gcell{flex:1;border-right:1px solid var(--border)}
@@ -108,27 +108,27 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .tl-bar{position:absolute;top:4px;height:24px;border-radius:5px;display:flex;align-items:center;overflow:hidden;cursor:pointer;transition:opacity .15s;z-index:2}
 .tl-bar:hover{opacity:.82}
 .tl-bar-text{font-size:10px;font-weight:500;color:#fff;white-space:nowrap;padding:0 6px;overflow:hidden;text-overflow:ellipsis}
-.tl-hint{font-size:11px;color:var(--text3);text-align:center;padding:2px 0 4px}
+.tl-hint{font-size:13px;color:#fff;text-align:center;padding:2px 0 4px}
 .task-list{display:flex;flex-direction:column;gap:7px}
 .task-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;animation:slideIn .18s ease}
 @keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .task-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .task-info{flex:1;min-width:0}
-.task-name-d{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-.task-time-d{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.task-name-d{font-size:15px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.task-time-d{font-family:var(--mono);font-size:13px;color:#fff}
 .task-actions{display:flex;gap:4px;flex-shrink:0}
 .task-act-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;border-radius:5px;transition:all .15s;display:flex}
 .task-act-btn:hover{color:var(--accent);background:rgba(124,108,250,.1)}
 .task-act-btn.del:hover{color:var(--red);background:rgba(240,107,107,.1)}
 .task-act-btn svg{width:13px;height:13px}
-.add-task-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:8px;padding:9px;font-size:13px;color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .15s;margin-top:10px}
+.add-task-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:8px;padding:9px;font-size:14px;color:#fff;cursor:pointer;font-family:var(--sans);transition:all .15s;margin-top:10px}
 .add-task-btn:hover{border-color:var(--accent);color:var(--accent)}
 
 /* DAILY SUMMARY */
 .daily-summary{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-top:14px;display:flex;align-items:center;justify-content:space-between}
-.daily-summary-label{font-size:12px;color:var(--text2)}
+.daily-summary-label{font-size:14px;color:#fff}
 .daily-summary-value{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--amber)}
-.daily-summary-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.daily-summary-sub{font-size:13px;color:#fff;margin-top:2px}
 
 /* CAT CHIPS */
 .cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px}
