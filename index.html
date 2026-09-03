@@ -131,9 +131,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .tl-gridlines{position:absolute;inset:0;display:flex;pointer-events:none;border-radius:8px;overflow:hidden}
 .tl-gcell{flex:1;border-right:1px solid var(--border)}
 .tl-gcell:last-child{border-right:none}
-.tl-bar{position:absolute;top:5px;height:32px;border-radius:5px;display:flex;align-items:center;overflow:hidden;cursor:pointer;transition:opacity .15s;z-index:2}
+.tl-bar{position:absolute;top:5px;height:32px;border-radius:5px;display:flex;align-items:center;overflow:hidden;cursor:pointer;transition:opacity .15s;z-index:2;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .tl-bar:hover{opacity:.82}
 .tl-bar.brk{background:repeating-linear-gradient(45deg,var(--break),var(--break) 5px,rgba(255,255,255,.16) 5px,rgba(255,255,255,.16) 10px)}
+.brk-pop{position:fixed;z-index:150;display:none;transform:translate(-50%,-100%);background:var(--break);color:#fff;border-radius:99px;padding:7px 15px;font-size:17px;font-family:var(--sans);white-space:nowrap;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.4);-webkit-user-select:none;user-select:none;transition:background .15s}
+.brk-pop.show{display:block}
+.brk-pop:hover{background:var(--accent)}
+.brk-pop::after{content:'';position:absolute;left:var(--arrow-x,50%);bottom:-4px;width:10px;height:10px;background:inherit;transform:translateX(-50%) rotate(45deg);border-radius:2px}
 .tl-bar-text{font-size:16px;font-weight:500;color:#fff;white-space:nowrap;padding:0 6px;overflow:hidden;text-overflow:ellipsis}
 .tl-hint{font-size:20px;color:var(--text2);text-align:center;padding:2px 0 4px}
 .task-list{display:flex;flex-direction:column;gap:7px}
@@ -329,6 +333,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
   </div>
 </div>
 
+<div class="brk-pop" id="brkPop"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -409,6 +414,7 @@ function findOverlap(tasks,sM,eM,skipIdx){
   })||null;
 }
 function minsToHMS(mins){const h=Math.floor(mins/60),m=mins%60;return `${h}:${String(m).padStart(2,'0')}`;}
+function fmtMin(m){return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;}
 
 /* USER */
 function openNameModal(){
@@ -587,8 +593,7 @@ function addBreak(startH,endH){
   for(let m=anchor;m+BREAK_MIN<=hi;m+=BREAK_MIN){if(free(m)){slot=m;break;}}
   if(slot===null)for(let m=anchor-BREAK_MIN;m>=lo;m-=BREAK_MIN){if(free(m)){slot=m;break;}}
   if(slot===null){showToast('この時間帯に空きがありません');return;}
-  const fmt=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
-  const start=fmt(slot),end=fmt(slot+BREAK_MIN);
+  const start=fmtMin(slot),end=fmtMin(slot+BREAK_MIN);
   day.tasks.push({start,end,name:BREAK_LABEL,category:BREAK_LABEL,break:true});
   data[iso]=day;saveStorage(data);
   renderTimeline(iso,day);renderDailySummary(day);
@@ -602,8 +607,61 @@ function delTask(i){
   renderTimeline(iso,day);renderDailySummary(day);showToast('削除しました');
 }
 
+/* 休憩ポップ（タスクバーにホバー／長押しで表示し、その位置へ休憩を差し込む） */
+let brkPopCtx=null,brkPopHideTimer=null,brkLongPressTimer=null,brkSuppressClick=false;
+
+function hideBrkPop(){
+  clearTimeout(brkPopHideTimer);brkPopHideTimer=null;brkPopCtx=null;
+  document.getElementById('brkPop').classList.remove('show');
+}
+function showBrkPop(clientX,barRect,idx,bs){
+  const pop=document.getElementById('brkPop');
+  clearTimeout(brkPopHideTimer);brkPopHideTimer=null;
+  brkPopCtx={idx,bs,be:bs+BREAK_MIN};
+  pop.textContent=`☕ 休憩 ${fmtMin(bs)}–${fmtMin(bs+BREAK_MIN)}`;
+  pop.classList.add('show');
+  const half=pop.offsetWidth/2;
+  const cx=Math.min(Math.max(clientX,half+6),window.innerWidth-half-6);
+  pop.style.left=cx+'px';
+  pop.style.top=(barRect.top-6)+'px';
+  pop.style.setProperty('--arrow-x',Math.min(Math.max(clientX-(cx-half),14),pop.offsetWidth-14)+'px');
+}
+/* タスクを分割して、その間に30分の休憩を挟む */
+function insertBreakIntoTask(idx,bs,be){
+  const iso=getSchISO();const{data,day}=getDayData(iso);
+  const t=day.tasks[idx];
+  if(!t||isBreak(t)||!t.start||!t.end){hideBrkPop();return;}
+  const ts=timeToMin(t.start),te=timeToMin(t.end);
+  if(bs<ts||be>te){showToast('この位置には休憩を入れられません');return;}
+  const dup=findOverlap(day.tasks,bs,be,idx);
+  if(dup){showToast(`「${dup.name}」と重複しています`);return;}
+  const parts=[];
+  if(bs>ts)parts.push({...t,end:fmtMin(bs)});
+  parts.push({start:fmtMin(bs),end:fmtMin(be),name:BREAK_LABEL,category:BREAK_LABEL,break:true});
+  if(be<te)parts.push({...t,start:fmtMin(be)});
+  day.tasks.splice(idx,1,...parts);
+  data[iso]=day;saveStorage(data);
+  hideBrkPop();
+  renderTimeline(iso,day);renderDailySummary(day);
+  showToast(`休憩 ${fmtMin(bs)}–${fmtMin(be)} を挿入しました`);
+}
+(function(){
+  const pop=document.getElementById('brkPop');
+  pop.addEventListener('mouseenter',()=>{clearTimeout(brkPopHideTimer);brkPopHideTimer=null;});
+  pop.addEventListener('mouseleave',hideBrkPop);
+  pop.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(brkPopCtx)insertBreakIntoTask(brkPopCtx.idx,brkPopCtx.bs,brkPopCtx.be);
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.brk-pop')&&!e.target.closest('.tl-bar'))hideBrkPop();
+  });
+  window.addEventListener('scroll',hideBrkPop,{passive:true});
+})();
+
 /* TIMELINE */
 function renderTimeline(iso,day){
+  hideBrkPop();
   const el=document.getElementById('tlContent');el.innerHTML='';
   [{label:'AM  0:00 – 12:00',startH:0,endH:12},{label:'PM  12:00 – 24:00',startH:12,endH:24}].forEach((half,hi)=>{
     const totalMin=(half.endH-half.startH)*60;
@@ -647,12 +705,36 @@ function renderTimeline(iso,day){
       bar.style.width=((cE-cS)/totalMin*100).toFixed(2)+'%';
       if(!brk)bar.style.background=c.color;
       const txt=document.createElement('span');txt.className='tl-bar-text';txt.textContent=t.name;bar.appendChild(txt);
-      bar.addEventListener('click',e=>{e.stopPropagation();openTaskModal(i,null);});
+      bar.addEventListener('click',e=>{
+        e.stopPropagation();
+        if(brkSuppressClick)return;
+        openTaskModal(i,null);
+      });
+      /* 60分以上のタスクだけ。分割しても勤務が30分以上残るようにするため */
+      if(!brk&&eM-sM>=60){
+        const snap=clientX=>{
+          const r=track.getBoundingClientRect();
+          const raw=half.startH*60+(clientX-r.left)/r.width*totalMin;
+          return Math.min(Math.max(Math.round(raw/BREAK_MIN)*BREAK_MIN,sM),eM-BREAK_MIN);
+        };
+        bar.addEventListener('mousemove',ev=>showBrkPop(ev.clientX,bar.getBoundingClientRect(),i,snap(ev.clientX)));
+        bar.addEventListener('mouseleave',()=>{brkPopHideTimer=setTimeout(hideBrkPop,200);});
+        bar.addEventListener('touchstart',ev=>{
+          const cx=ev.touches[0].clientX;
+          clearTimeout(brkLongPressTimer);
+          brkLongPressTimer=setTimeout(()=>{
+            brkSuppressClick=true;setTimeout(()=>{brkSuppressClick=false;},700);
+            showBrkPop(cx,bar.getBoundingClientRect(),i,snap(cx));
+          },450);
+        },{passive:true});
+        ['touchend','touchmove','touchcancel'].forEach(ev=>
+          bar.addEventListener(ev,()=>clearTimeout(brkLongPressTimer),{passive:true}));
+      }
       track.appendChild(bar);
     });
 
     wrap.appendChild(track);
-    const hint=document.createElement('div');hint.className='tl-hint';hint.textContent='タップしてタスクを追加';wrap.appendChild(hint);
+    const hint=document.createElement('div');hint.className='tl-hint';hint.textContent='タップで追加・長押しで休憩';wrap.appendChild(hint);
 
     const tasksInHalf=day.tasks.map((t,i)=>({...t,i})).filter(t=>{
       if(!t.start)return hi===0;
