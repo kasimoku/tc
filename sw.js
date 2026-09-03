@@ -1,11 +1,14 @@
-const CACHE = 'timecard-v4';
+const CACHE = 'timecard-v5';
+const SCOPE = new URL('./', location).pathname;
 const ASSETS = [
   './',
   'index.html',
   'manifest.json',
   'icon-192.png',
   'icon-512.png',
-  'apple-touch-icon.png',
+  'tc-touch-icon-180.png',
+  'tc-touch-icon-167.png',
+  'tc-touch-icon-152.png',
   'break-icon.png',
   't-icon.png',
 ];
@@ -46,7 +49,8 @@ self.addEventListener('fetch', e => {
   // Cache-first for everything else (icons, fonts, etc.).
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
-      if (res.ok && (url.origin === location.origin || url.hostname.endsWith('gstatic.com') || url.hostname.endsWith('googleapis.com'))) {
+      const ours = url.origin === location.origin && url.pathname.startsWith(SCOPE);
+      if (res.ok && (ours || url.hostname.endsWith('gstatic.com') || url.hostname.endsWith('googleapis.com'))) {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(req, copy));
       }
