@@ -133,7 +133,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .tl-gcell:last-child{border-right:none}
 .tl-bar{position:absolute;top:5px;height:32px;border-radius:5px;display:flex;align-items:center;overflow:hidden;cursor:pointer;transition:opacity .15s;z-index:2;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .tl-bar:hover{opacity:.82}
-.tl-bar.brk{background:repeating-linear-gradient(45deg,var(--break),var(--break) 5px,rgba(255,255,255,.16) 5px,rgba(255,255,255,.16) 10px)}
+.tl-bar.brk{background:var(--break);justify-content:center;overflow:visible;z-index:3}
+.brk-icon{width:28px;height:28px;flex-shrink:0;pointer-events:none;image-rendering:pixelated;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
 .brk-pop{position:fixed;z-index:150;display:none;transform:translate(-50%,-100%);background:var(--break);color:#fff;border-radius:99px;padding:7px 15px;font-size:17px;font-family:var(--sans);white-space:nowrap;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.4);-webkit-user-select:none;user-select:none;transition:background .15s}
 .brk-pop.show{display:block}
 .brk-pop:hover{background:var(--accent)}
@@ -348,6 +349,7 @@ const DEFAULT_CATS=[
 ];
 
 const BREAK_LABEL='休憩';
+const BREAK_ICON='break-icon.png';
 const BREAK_MIN=30;
 const SUN_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
 const MOON_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
@@ -704,7 +706,17 @@ function renderTimeline(iso,day){
       bar.style.left=((cS-half.startH*60)/totalMin*100).toFixed(2)+'%';
       bar.style.width=((cE-cS)/totalMin*100).toFixed(2)+'%';
       if(!brk)bar.style.background=c.color;
-      const txt=document.createElement('span');txt.className='tl-bar-text';txt.textContent=t.name;bar.appendChild(txt);
+      if(brk){
+        const img=document.createElement('img');
+        img.className='brk-icon';img.src=BREAK_ICON;img.alt=BREAK_LABEL;img.draggable=false;
+        img.addEventListener('error',()=>{
+          img.remove();bar.style.overflow='hidden';bar.style.justifyContent='';
+          const s=document.createElement('span');s.className='tl-bar-text';s.textContent=t.name;bar.appendChild(s);
+        });
+        bar.appendChild(img);
+      }else{
+        const txt=document.createElement('span');txt.className='tl-bar-text';txt.textContent=t.name;bar.appendChild(txt);
+      }
       bar.addEventListener('click',e=>{
         e.stopPropagation();
         if(brkSuppressClick)return;

@@ -1,4 +1,4 @@
-const CACHE = 'timecard-v1';
+const CACHE = 'timecard-v2';
 const ASSETS = [
   './',
   'index.html',
@@ -6,10 +6,16 @@ const ASSETS = [
   'icon-192.png',
   'icon-512.png',
   'apple-touch-icon.png',
+  'break-icon.png',
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // Per-asset so one missing file (e.g. an icon not added yet) can't fail the whole install.
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => Promise.all(ASSETS.map(a => c.add(a).catch(() => {}))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {
