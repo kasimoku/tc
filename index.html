@@ -60,7 +60,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--overlay);align-items:center;justify-content:center;padding:16px}
 .modal-overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:24px 22px 20px;width:min(420px,100%)}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:24px 22px 20px;width:min(420px,100%);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto}
 .modal h3{font-size:25px;font-weight:500;margin-bottom:14px}
 .modal-footer{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
 .btn{border:none;border-radius:9px;padding:9px 18px;font-size:20px;font-weight:500;font-family:var(--sans);cursor:pointer;transition:all .15s}
@@ -175,7 +175,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .cat-chip:hover{border-color:var(--border2);color:var(--text2)}
 
 /* CAT EDIT */
-.cat-edit-list{display:flex;flex-direction:column;gap:7px;max-height:46vh;overflow-y:auto;overflow-x:hidden;margin-bottom:4px}
+.cat-edit-list{display:flex;flex-direction:column;gap:7px;margin-bottom:4px}
 .cat-edit-item{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:9px;padding:8px 10px;border:1px solid var(--border);min-width:0}
 .color-swatch{width:34px;height:34px;border-radius:6px;border:none;cursor:pointer;flex-shrink:0;padding:2px;background:var(--surface2)}
 .cat-edit-item input[type=text]{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);font-size:22px;font-family:var(--sans)}
@@ -185,6 +185,33 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .add-cat-row{display:flex;gap:8px;align-items:center;margin-top:8px}
 .add-cat-row input[type=color]{width:44px;height:44px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2)}
 .add-cat-row .t-input{flex:1}
+
+/* SETTINGS SECTIONS */
+.settings-body{max-height:56vh;overflow-y:auto;overflow-x:hidden;padding-right:6px}
+.set-sec{font-size:17px;letter-spacing:.08em;color:var(--text2);margin:16px 0 9px;display:flex;align-items:center;gap:8px}
+.set-sec:first-child{margin-top:0}
+.set-sec::after{content:'';flex:1;height:1px;background:var(--border)}
+.set-empty{font-size:17px;color:var(--text3);padding:6px 2px}
+select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888894' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;background-size:18px;padding-right:36px}
+.mono-in{font-family:var(--mono);text-align:center;padding-left:6px;padding-right:6px}
+.add-proj-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
+.proj-preview{font-family:var(--mono);font-size:19px;color:var(--accent);text-align:center;margin-top:10px}
+.add-proj-row2{display:flex;gap:8px;margin-top:8px}
+.add-proj-row2 .t-input{flex:1;min-width:0}
+.proj-item{display:flex;align-items:center;gap:9px;background:var(--surface2);border-radius:9px;padding:9px 10px;border:1px solid var(--border);min-width:0}
+.proj-code{font-family:var(--mono);font-size:18px;color:var(--text);white-space:nowrap;flex-shrink:0}
+.proj-name-in{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text2);font-size:17px;font-family:var(--sans)}
+
+/* PROJECT SUMMARY */
+.proj-sum-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2px 16px}
+.proj-sum-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--border)}
+.proj-sum-row:first-child{border-top:none}
+.proj-sum-info{flex:1;min-width:0}
+.proj-sum-code{font-family:var(--mono);font-size:19px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-sum-code.none{font-family:var(--sans);color:var(--text2)}
+.proj-sum-name{font-size:17px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-sum-val{font-family:var(--mono);font-size:24px;color:var(--amber);flex-shrink:0}
+.task-proj-d{font-family:var(--mono);font-size:16px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 
 /* EXPORT */
 .export-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 16px;margin-bottom:12px}
@@ -205,7 +232,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
   <span class="app-name">TIMECARD</span>
   <div class="top-actions">
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="テーマ切替"></button>
-    <button class="icon-btn" onclick="openSettings()" title="カテゴリ設定">
+    <button class="icon-btn" onclick="openSettings()" title="設定">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
     <div class="user-chip" onclick="openNameModal()">
@@ -232,6 +259,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 <div class="modal-overlay" id="taskModal">
   <div class="modal">
     <h3 id="taskModalTitle">タスクを追加</h3>
+    <div id="mProjectRow" style="margin-bottom:12px">
+      <span class="input-label" style="display:block;margin-bottom:5px">案件</span>
+      <select class="t-input" id="mProject"></select>
+    </div>
     <div class="form-row">
       <div class="input-group"><span class="input-label">開始</span><input class="time-inp" type="time" id="mStart"></div>
       <div class="input-group"><span class="input-label">終了</span><input class="time-inp" type="time" id="mEnd"></div>
@@ -239,6 +270,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
     <div style="margin-bottom:12px">
       <input class="t-input" type="text" id="mName" placeholder="タスク内容" maxlength="40">
     </div>
+    <span class="input-label" id="mCatLabel" style="display:block;margin-bottom:6px">タスク種別</span>
     <div class="cat-row" id="modalCatRow"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('taskModal')">キャンセル</button>
@@ -250,12 +282,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
-    <h3>カテゴリ設定</h3>
-    <div class="cat-edit-list" id="catEditList"></div>
-    <div class="add-cat-row">
-      <input type="color" id="newCatColor" value="#7c6cfa">
-      <input class="t-input" id="newCatName" placeholder="カテゴリ名" maxlength="20">
-      <button class="btn btn-ghost" onclick="addCatItem()" style="flex-shrink:0;white-space:nowrap">追加</button>
+    <h3>設定</h3>
+    <div class="settings-body">
+      <div class="set-sec">案件番号</div>
+      <div class="cat-edit-list" id="projEditList"></div>
+      <div class="input-group" style="margin-top:10px">
+        <span class="input-label">部門</span>
+        <select class="t-input" id="newProjDept" onchange="updateProjPreview()"></select>
+      </div>
+      <div class="add-proj-row">
+        <div class="input-group"><span class="input-label">年月</span><input class="t-input mono-in" id="newProjYm" maxlength="5" inputmode="numeric" placeholder="02609" oninput="updateProjPreview()"></div>
+        <div class="input-group"><span class="input-label">番号</span><input class="t-input mono-in" id="newProjNo" maxlength="3" inputmode="numeric" placeholder="001" oninput="updateProjPreview()"></div>
+      </div>
+      <div class="proj-preview" id="projPreview">—</div>
+      <div class="add-proj-row2">
+        <input class="t-input" id="newProjName" placeholder="案件名（任意）" maxlength="30">
+        <button class="btn btn-ghost" onclick="addProjItem()" style="flex-shrink:0;white-space:nowrap">追加</button>
+      </div>
+
+      <div class="set-sec">タスク種別</div>
+      <div class="cat-edit-list" id="catEditList"></div>
+      <div class="add-cat-row">
+        <input type="color" id="newCatColor" value="#7c6cfa">
+        <input class="t-input" id="newCatName" placeholder="タスク種別名" maxlength="20">
+        <button class="btn btn-ghost" onclick="addCatItem()" style="flex-shrink:0;white-space:nowrap">追加</button>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('settingsModal')">キャンセル</button>
@@ -293,6 +344,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
         </div>
       </div>
     </div>
+    <div class="sec" id="projSumTitle" style="display:none;margin-top:20px">案件別 実働時間</div>
+    <div id="projSummary"></div>
   </div>
 
   <!-- SCHEDULE -->
@@ -356,8 +409,17 @@ const BREAK_MIN=30;
 const SUN_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
 const MOON_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 
+const DEPTS=[
+  {code:'G',label:'総務'},
+  {code:'C',label:'コンテンツ'},
+  {code:'H',label:'設計'},
+  {code:'L',label:'くらしの道具'},
+];
+
 let cats=[];
 let editCats=[];
+let projects=[];
+let editProjects=[];
 let editingTaskIdx=-1;
 let editingIsBreak=false;
 let modalSelectedCat='';
@@ -367,6 +429,13 @@ let schDate=new Date();schDate.setHours(0,0,0,0);
 
 function loadCats(){cats=JSON.parse(localStorage.getItem('tc_cats')||'null')||DEFAULT_CATS;}
 function saveCats(){localStorage.setItem('tc_cats',JSON.stringify(cats));}
+function loadProjects(){try{projects=JSON.parse(localStorage.getItem('tc_projects')||'null')||[];}catch(e){projects=[];}}
+function saveProjects(){localStorage.setItem('tc_projects',JSON.stringify(projects));}
+function projByCode(c){return projects.find(p=>p.code===c)||null;}
+function projLabel(c){const p=projByCode(c);return p&&p.name?`${c}｜${p.name}`:c;}
+function sortProjects(a,b){return a.code<b.code?-1:a.code>b.code?1:0;}
+/* 案件番号の年月部分。C_02609_001 = 2026年9月 の並びに合わせて 0+YY+MM */
+function defaultYm(){const d=new Date();return '0'+String(d.getFullYear()%100).padStart(2,'0')+String(d.getMonth()+1).padStart(2,'0');}
 function getStorage(){try{return JSON.parse(localStorage.getItem('tc_data')||'{}')}catch(e){return {};}}
 function saveStorage(d){localStorage.setItem('tc_data',JSON.stringify(d));}
 function toISO(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -374,7 +443,7 @@ function getSchISO(){return toISO(schDate);}
 function getDayData(iso){const data=getStorage();if(!data[iso])data[iso]={tasks:[]};return{data,day:data[iso]};}
 function timeToMin(t){if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m;}
 function catByLabel(l){return cats.find(c=>c.label===l)||{label:'その他',color:'#888780'};}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
@@ -459,6 +528,7 @@ function renderCalendar(){
   const prevDays=new Date(calYear,calMonth,0).getDate();
   const today=toISO(new Date());
   let workedDays=0,totalMins=0;
+  const projMins=new Map();
 
   for(let i=firstDay-1;i>=0;i--){
     const cell=document.createElement('div');cell.className='cal-cell empty other-month';
@@ -472,6 +542,11 @@ function renderCalendar(){
     const hasWork=taskMins>0;
     const dow=new Date(calYear,calMonth,d).getDay();
     if(hasWork){workedDays++;totalMins+=taskMins;}
+    ((dayData&&dayData.tasks)||[]).forEach(t=>{
+      if(isBreak(t)||!t.start||!t.end)return;
+      const m=timeToMin(t.end)-timeToMin(t.start);
+      if(m>0)projMins.set(t.project||'',(projMins.get(t.project||'')||0)+m);
+    });
 
     const cell=document.createElement('div');
     let cls='cal-cell';
@@ -497,6 +572,28 @@ function renderCalendar(){
 
   document.getElementById('calDays').textContent=workedDays+'日';
   document.getElementById('calHours').textContent=minsToHMS(totalMins);
+  renderProjSummary(projMins);
+}
+/* 案件番号ごとの実働時間（休憩を除く）。表示中の月が対象 */
+function renderProjSummary(projMins){
+  const title=document.getElementById('projSumTitle');
+  const wrap=document.getElementById('projSummary');
+  wrap.innerHTML='';
+  if(!projMins.size){title.style.display='none';return;}
+  title.style.display='flex';
+  const card=document.createElement('div');card.className='proj-sum-card';
+  [...projMins.entries()].sort((a,b)=>b[1]-a[1]).forEach(([code,mins])=>{
+    const p=code?projByCode(code):null;
+    const row=document.createElement('div');row.className='proj-sum-row';
+    row.innerHTML=`
+      <div class="proj-sum-info">
+        <div class="proj-sum-code${code?'':' none'}">${code?esc(code):'案件未設定'}</div>
+        ${p&&p.name?`<div class="proj-sum-name">${esc(p.name)}</div>`:''}
+      </div>
+      <div class="proj-sum-val">${minsToHMS(mins)}</div>`;
+    card.appendChild(row);
+  });
+  wrap.appendChild(card);
 }
 
 /* SCHEDULE */
@@ -518,6 +615,18 @@ function renderDailySummary(day){
 }
 
 /* TASK MODAL */
+function buildModalProjects(cur){
+  const sel=document.getElementById('mProject');sel.innerHTML='';
+  const none=document.createElement('option');none.value='';none.textContent='案件なし';sel.appendChild(none);
+  projects.forEach(p=>{
+    const op=document.createElement('option');op.value=p.code;op.textContent=projLabel(p.code);sel.appendChild(op);
+  });
+  /* 設定から消された案件番号でも、記録済みのものは選択肢に残す */
+  if(cur&&!projByCode(cur)){
+    const op=document.createElement('option');op.value=cur;op.textContent=cur+'（未登録）';sel.appendChild(op);
+  }
+  sel.value=cur||'';
+}
 function buildModalCats(currentCat){
   const row=document.getElementById('modalCatRow');row.innerHTML='';
   modalSelectedCat=currentCat||'';
@@ -542,12 +651,15 @@ function openTaskModal(idx,presetStart){
   editingTaskIdx=idx;modalSelectedCat='';
   editingIsBreak=idx>=0&&isBreak(day.tasks[idx]);
   document.getElementById('modalCatRow').style.display=editingIsBreak?'none':'flex';
+  document.getElementById('mCatLabel').style.display=editingIsBreak?'none':'block';
+  document.getElementById('mProjectRow').style.display=editingIsBreak?'none':'block';
   if(idx>=0){
     const t=day.tasks[idx];
     document.getElementById('taskModalTitle').textContent=editingIsBreak?'休憩を編集':'タスクを編集';
     document.getElementById('mStart').value=t.start||'';
     document.getElementById('mEnd').value=t.end||'';
     document.getElementById('mName').value=t.name;
+    buildModalProjects(t.project||'');
     buildModalCats(t.category);
   }else{
     document.getElementById('taskModalTitle').textContent='タスクを追加';
@@ -560,6 +672,7 @@ function openTaskModal(idx,presetStart){
       mEnd.value=`${String(Math.floor(endMin/60)).padStart(2,'0')}:${String(endMin%60).padStart(2,'0')}`;
     }
     document.getElementById('mName').value='';
+    buildModalProjects('');
     buildModalCats('');
   }
   document.getElementById('taskModal').classList.add('open');
@@ -577,6 +690,7 @@ function saveTask(){
   if(dup){showToast(`「${dup.name}」(${dup.start}–${dup.end})と重複しています`);return;}
   const task={start:s,end:e,name:n,category:editingIsBreak?BREAK_LABEL:(modalSelectedCat||'その他')};
   if(editingIsBreak)task.break=true;
+  else{const pc=document.getElementById('mProject').value;if(pc)task.project=pc;}
   if(editingTaskIdx>=0)day.tasks[editingTaskIdx]=task;
   else day.tasks.push(task);
   data[iso]=day;saveStorage(data);closeModal('taskModal');
@@ -767,6 +881,7 @@ function renderTimeline(iso,day){
           <div class="task-info">
             <div class="task-name-d">${esc(t.name)}</div>
             <div class="task-time-d">${t.start||'??:??'} – ${t.end||'??:??'} · ${esc(t.category)}</div>
+            ${t.project?`<div class="task-proj-d">${esc(t.project)}</div>`:''}
           </div>
           <div class="task-actions">
             <button class="task-act-btn" title="編集"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -793,16 +908,68 @@ function renderTimeline(iso,day){
 
 /* SETTINGS */
 function openSettings(){
-  loadCats();editCats=cats.map(c=>({...c}));renderCatEditList();
+  loadCats();loadProjects();
+  editCats=cats.map(c=>({...c}));
+  editProjects=projects.map(p=>({...p}));
+  renderCatEditList();renderProjEditList();
+  const dept=document.getElementById('newProjDept');
+  dept.innerHTML='';
+  DEPTS.forEach(d=>{
+    const op=document.createElement('option');op.value=d.code;op.textContent=`${d.code}｜${d.label}`;dept.appendChild(op);
+  });
+  document.getElementById('newProjYm').value=defaultYm();
+  document.getElementById('newProjNo').value='';
+  document.getElementById('newProjName').value='';
+  updateProjPreview();
   document.getElementById('settingsModal').classList.add('open');
 }
+function renderProjEditList(){
+  const list=document.getElementById('projEditList');list.innerHTML='';
+  if(!editProjects.length){
+    const em=document.createElement('div');em.className='set-empty';em.textContent='まだ登録がありません';
+    list.appendChild(em);return;
+  }
+  editProjects.forEach((p,i)=>{
+    const item=document.createElement('div');item.className='proj-item';
+    item.innerHTML=`
+      <span class="proj-code">${esc(p.code)}</span>
+      <input type="text" class="proj-name-in" value="${esc(p.name||'')}" maxlength="30" placeholder="案件名（任意）" oninput="editProjects[${i}].name=this.value">
+      <button class="del-cat-btn" onclick="removeProjItem(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+    list.appendChild(item);
+  });
+}
+function updateProjPreview(){
+  const el=document.getElementById('projPreview');
+  const ym=document.getElementById('newProjYm').value.trim();
+  const no=document.getElementById('newProjNo').value.trim();
+  el.textContent=(/^\d{5}$/.test(ym)&&/^\d{1,3}$/.test(no))
+    ? `${document.getElementById('newProjDept').value}_${ym}_${no.padStart(3,'0')}`
+    : '—';
+}
+function addProjItem(){
+  const dept=document.getElementById('newProjDept').value;
+  const ym=document.getElementById('newProjYm').value.trim();
+  const no=document.getElementById('newProjNo').value.trim();
+  if(!/^\d{5}$/.test(ym)){showToast('年月は5桁の数字で入力してください');return;}
+  if(!/^\d{1,3}$/.test(no)){showToast('番号は3桁までの数字で入力してください');return;}
+  const code=`${dept}_${ym}_${no.padStart(3,'0')}`;
+  if(editProjects.some(p=>p.code===code)){showToast('その案件番号は登録済みです');return;}
+  editProjects.push({code,name:document.getElementById('newProjName').value.trim()});
+  editProjects.sort(sortProjects);
+  document.getElementById('newProjNo').value='';
+  document.getElementById('newProjName').value='';
+  updateProjPreview();
+  renderProjEditList();
+  showToast(`${code} を追加しました`);
+}
+function removeProjItem(i){editProjects.splice(i,1);renderProjEditList();}
 function renderCatEditList(){
   const list=document.getElementById('catEditList');list.innerHTML='';
   editCats.forEach((c,i)=>{
     const item=document.createElement('div');item.className='cat-edit-item';
     item.innerHTML=`
       <input type="color" class="color-swatch" value="${c.color}" onchange="editCats[${i}].color=this.value">
-      <input type="text" value="${esc(c.label)}" maxlength="20" oninput="editCats[${i}].label=this.value" placeholder="カテゴリ名">
+      <input type="text" value="${esc(c.label)}" maxlength="20" oninput="editCats[${i}].label=this.value" placeholder="タスク種別名">
       <button class="del-cat-btn" onclick="removeCatItem(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
     list.appendChild(item);
   });
@@ -810,14 +977,19 @@ function renderCatEditList(){
 function addCatItem(){
   const name=document.getElementById('newCatName').value.trim();
   const color=document.getElementById('newCatColor').value;
-  if(!name){showToast('カテゴリ名を入力してください');return;}
+  if(!name){showToast('タスク種別名を入力してください');return;}
   editCats.push({label:name,color});document.getElementById('newCatName').value='';renderCatEditList();
 }
 function removeCatItem(i){editCats.splice(i,1);renderCatEditList();}
 function saveSettings(){
   const valid=editCats.filter(c=>c.label.trim());
-  if(!valid.length){showToast('カテゴリが1つ以上必要です');return;}
-  cats=valid;saveCats();closeModal('settingsModal');showToast('カテゴリを保存しました');
+  if(!valid.length){showToast('タスク種別が1つ以上必要です');return;}
+  cats=valid;saveCats();
+  projects=editProjects.map(p=>({code:p.code,name:(p.name||'').trim()})).sort(sortProjects);
+  saveProjects();
+  closeModal('settingsModal');showToast('設定を保存しました');
+  renderCalendar();
+  if(document.getElementById('tab-schedule').style.display!=='none')renderSchedule();
 }
 
 /* TABS */
@@ -833,7 +1005,7 @@ function switchTab(name,btn){
 function exportJSON(){
   const name=localStorage.getItem('tc_name')||'未設定';
   const data=getStorage();
-  const payload={employee:name,exportedAt:new Date().toISOString(),records:data};
+  const payload={employee:name,exportedAt:new Date().toISOString(),projects,records:data};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   const now=new Date();
@@ -851,6 +1023,14 @@ function handleImport(e){
       if(!confirm('現在のデータにインポートデータを統合します。よろしいですか？'))return;
       saveStorage({...getStorage(),...records});
       if(json.employee)localStorage.setItem('tc_name',json.employee);
+      if(Array.isArray(json.projects)){
+        loadProjects();
+        const byCode=new Map(projects.map(p=>[p.code,p]));
+        json.projects.forEach(p=>{
+          if(p&&typeof p.code==='string')byCode.set(p.code,{code:p.code,name:typeof p.name==='string'?p.name:''});
+        });
+        projects=[...byCode.values()].sort(sortProjects);saveProjects();
+      }
       updateUserChip();renderCalendar();showToast('インポートしました');
     }catch(err){showToast('JSONの形式が正しくありません');}
   };
@@ -864,7 +1044,7 @@ function clearAll(){
 /* INIT */
 function init(){
   applyTheme(currentTheme());
-  loadCats();updateUserChip();renderCalendar();
+  loadCats();loadProjects();updateUserChip();renderCalendar();
   if(!localStorage.getItem('tc_name'))openNameModal();
 }
 init();
