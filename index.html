@@ -125,8 +125,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 /* TIMELINE */
 .tl-half{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 12px;margin-bottom:12px}
 .tl-period{font-size:20px;font-family:var(--mono);color:var(--text);letter-spacing:.08em;margin-bottom:10px}
-.tl-axis{position:relative;height:20px;margin-bottom:4px}
-.tl-tick{position:absolute;font-size:19px;color:var(--text);font-family:var(--mono)}
+.tl-axis{position:relative;height:16px;margin-bottom:4px}
+.tl-tick{position:absolute;font-size:14px;color:var(--text);font-family:var(--mono)}
 .tl-track{position:relative;height:42px;background:var(--surface2);border-radius:8px;margin-bottom:10px;cursor:crosshair;overflow:hidden}
 .tl-gridlines{position:absolute;inset:0;display:flex;pointer-events:none;border-radius:8px;overflow:hidden}
 .tl-gcell{flex:1;border-right:1px solid var(--border)}
@@ -613,7 +613,7 @@ function renderTimeline(iso,day){
 
     const axis=document.createElement('div');axis.className='tl-axis';
     const hours=half.endH-half.startH;
-    for(let h=half.startH;h<half.endH;h+=2){
+    for(let h=half.startH;h<half.endH;h++){
       const tick=document.createElement('div');tick.className='tl-tick';tick.textContent=`${h}`;
       tick.style.left=`${(h-half.startH)/hours*100}%`;
       axis.appendChild(tick);
