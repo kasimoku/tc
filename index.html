@@ -213,11 +213,31 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-sum-val{font-family:var(--mono);font-size:24px;color:var(--amber);flex-shrink:0}
 .task-proj-d{font-family:var(--mono);font-size:16px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 
+/* EXPORT PERIOD */
+.exp-period-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.exp-period{text-align:center;min-width:0}
+.exp-period-range{font-family:var(--mono);font-size:20px;color:var(--text);white-space:nowrap}
+@media (max-width:360px){
+  .exp-period-range{font-size:16px}
+  .exp-period-nav{gap:6px}
+  .export-card{padding:18px 12px}
+}
+.exp-period-note{font-size:16px;color:var(--text3);margin-top:3px}
+.exp-metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:2px 0 14px}
+.exp-metric{text-align:center}
+.exp-metric-label{font-size:17px;color:var(--text3);margin-bottom:4px}
+.exp-metric-value{font-family:var(--mono);font-size:28px;font-weight:500}
+.exp-metric-value.green{color:var(--green)}
+.exp-metric-value.amber{color:var(--amber)}
+.exp-empty{text-align:center;font-size:18px;color:var(--text3);padding:6px 0 14px}
+.exp-all-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:10px;padding:10px;font-size:18px;color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .15s;margin-bottom:10px}
+.exp-all-btn:hover{border-color:var(--accent);color:var(--accent)}
+
 /* EXPORT */
 .export-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 16px;margin-bottom:12px}
 .export-desc{font-size:20px;color:var(--text2);line-height:1.7;margin-bottom:14px}
 .export-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.exp-btn{border-radius:10px;padding:11px 8px;font-size:20px;font-weight:500;font-family:var(--sans);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;border:none}
+.exp-btn{border-radius:10px;padding:11px 6px;white-space:nowrap;font-size:20px;font-weight:500;font-family:var(--sans);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;border:none}
 .exp-btn svg{width:19px;height:19px}
 .exp-json{background:rgba(124,108,250,.15);border:1px solid rgba(124,108,250,.3);color:var(--accent)}.exp-json:hover{background:rgba(124,108,250,.25)}
 .exp-import{background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.25);color:var(--green)}.exp-import:hover{background:rgba(62,207,142,.2)}
@@ -370,7 +390,16 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
   <div id="tab-export" style="display:none">
     <div class="sec">データ管理</div>
     <div class="export-card">
-      <div class="export-desc">月末に今月分のデータをJSONで出力して人事担当者に提出してください。過去のJSONからデータを復元することもできます。</div>
+      <div class="exp-period-nav">
+        <button class="sch-date-btn" onclick="changeExpPeriod(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <div class="exp-period">
+          <div class="exp-period-range" id="expRange">—</div>
+          <div class="exp-period-note">15日締め</div>
+        </div>
+        <button class="sch-date-btn" onclick="changeExpPeriod(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <div id="expTotals"></div>
+      <div class="export-desc">締め日（15日）を過ぎたら対象期間を選び、JSONを出力して人事担当者に提出してください。過去のJSONからデータを復元することもできます。</div>
       <div class="export-btns">
         <button class="exp-btn exp-json" onclick="exportJSON()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -381,6 +410,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
           インポート
         </button>
       </div>
+      <button class="exp-all-btn" onclick="exportJSON(true)">全期間を出力（バックアップ用）</button>
       <button class="exp-btn exp-clear" style="width:100%" onclick="clearAll()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         全データ削除
@@ -423,6 +453,8 @@ let editProjects=[];
 let editingTaskIdx=-1;
 let editingIsBreak=false;
 let modalSelectedCat='';
+const CLOSING_DAY=15;
+let expOffset=0;
 let calYear=new Date().getFullYear();
 let calMonth=new Date().getMonth();
 let schDate=new Date();schDate.setHours(0,0,0,0);
@@ -438,6 +470,7 @@ function sortProjects(a,b){return a.code<b.code?-1:a.code>b.code?1:0;}
 function defaultYm(){const d=new Date();return '0'+String(d.getFullYear()%100).padStart(2,'0')+String(d.getMonth()+1).padStart(2,'0');}
 function getStorage(){try{return JSON.parse(localStorage.getItem('tc_data')||'{}')}catch(e){return {};}}
 function saveStorage(d){localStorage.setItem('tc_data',JSON.stringify(d));}
+function fmtDate(d){return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;}
 function toISO(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function getSchISO(){return toISO(schDate);}
 function getDayData(iso){const data=getStorage();if(!data[iso])data[iso]={tasks:[]};return{data,day:data[iso]};}
@@ -999,18 +1032,84 @@ function switchTab(name,btn){
   document.getElementById('tab-'+name).style.display='block';btn.classList.add('active');
   if(name==='calendar')renderCalendar();
   if(name==='schedule')renderSchedule();
+  if(name==='export')renderExport();
 }
 
 /* EXPORT / IMPORT */
-function exportJSON(){
+/* 15日締め。offset 0 = 今日を含む期間（16日〜翌15日） */
+function periodRange(offset){
+  const t=new Date();
+  let m=t.getMonth()+(t.getDate()>CLOSING_DAY?1:0)+offset;
+  return {start:new Date(t.getFullYear(),m-1,CLOSING_DAY+1),end:new Date(t.getFullYear(),m,CLOSING_DAY)};
+}
+function periodRecords(){
+  const{start,end}=periodRange(expOffset);
+  const from=toISO(start),to=toISO(end),data=getStorage(),out={};
+  Object.keys(data).forEach(k=>{if(k>=from&&k<=to)out[k]=data[k];});
+  return {from,to,records:out};
+}
+function changeExpPeriod(d){expOffset+=d;renderExport();}
+function renderExport(){
+  const{start,end}=periodRange(expOffset);
+  const endTxt=start.getFullYear()===end.getFullYear()
+    ? fmtDate(end).slice(5)
+    : fmtDate(end);
+  document.getElementById('expRange').textContent=`${fmtDate(start)} – ${endTxt}`;
+  const{records}=periodRecords();
+  let days=0,mins=0;const projMins=new Map();
+  Object.values(records).forEach(day=>{
+    const m=calcTaskMinutes(day);
+    if(m>0){days++;mins+=m;}
+    (day.tasks||[]).forEach(t=>{
+      if(isBreak(t)||!t.start||!t.end)return;
+      const v=timeToMin(t.end)-timeToMin(t.start);
+      if(v>0)projMins.set(t.project||'',(projMins.get(t.project||'')||0)+v);
+    });
+  });
+  const wrap=document.getElementById('expTotals');wrap.innerHTML='';
+  if(!days&&!projMins.size){
+    const em=document.createElement('div');em.className='exp-empty';em.textContent='この期間の記録はまだありません';
+    wrap.appendChild(em);return;
+  }
+  const met=document.createElement('div');met.className='exp-metrics';
+  met.innerHTML=`
+    <div class="exp-metric"><div class="exp-metric-label">出勤日数</div><div class="exp-metric-value green">${days}日</div></div>
+    <div class="exp-metric"><div class="exp-metric-label">実働時間</div><div class="exp-metric-value amber">${minsToHMS(mins)}</div></div>`;
+  wrap.appendChild(met);
+  if(projMins.size){
+    const card=document.createElement('div');card.className='proj-sum-card';card.style.marginBottom='14px';
+    [...projMins.entries()].sort((a,b)=>b[1]-a[1]).forEach(([code,v])=>{
+      const p=code?projByCode(code):null;
+      const row=document.createElement('div');row.className='proj-sum-row';
+      row.innerHTML=`
+        <div class="proj-sum-info">
+          <div class="proj-sum-code${code?'':' none'}">${code?esc(code):'案件未設定'}</div>
+          ${p&&p.name?`<div class="proj-sum-name">${esc(p.name)}</div>`:''}
+        </div>
+        <div class="proj-sum-val">${minsToHMS(v)}</div>`;
+      card.appendChild(row);
+    });
+    wrap.appendChild(card);
+  }
+}
+function exportJSON(all){
   const name=localStorage.getItem('tc_name')||'未設定';
-  const data=getStorage();
-  const payload={employee:name,exportedAt:new Date().toISOString(),projects,records:data};
+  let records,period=null,suffix;
+  if(all){
+    records=getStorage();suffix='all';
+  }else{
+    const r=periodRecords();
+    if(!Object.keys(r.records).length){showToast('この期間の記録がありません');return;}
+    records=r.records;
+    period={closingDay:CLOSING_DAY,from:r.from,to:r.to};
+    suffix=`${r.from.replace(/-/g,'')}-${r.to.replace(/-/g,'')}`;
+  }
+  const payload={employee:name,exportedAt:new Date().toISOString(),period,projects,records};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  const now=new Date();
-  a.href=url;a.download=`timecard_${name}_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}.json`;
-  a.click();URL.revokeObjectURL(url);showToast('JSONを出力しました');
+  a.href=url;a.download=`timecard_${name}_${suffix}.json`;
+  a.click();URL.revokeObjectURL(url);
+  showToast(all?'全期間を出力しました':'JSONを出力しました');
 }
 function handleImport(e){
   const file=e.target.files[0];if(!file)return;
@@ -1031,14 +1130,14 @@ function handleImport(e){
         });
         projects=[...byCode.values()].sort(sortProjects);saveProjects();
       }
-      updateUserChip();renderCalendar();showToast('インポートしました');
+      updateUserChip();renderCalendar();renderExport();showToast('インポートしました');
     }catch(err){showToast('JSONの形式が正しくありません');}
   };
   reader.readAsText(file);e.target.value='';
 }
 function clearAll(){
   if(!confirm('すべての記録を削除しますか？この操作は取り消せません。'))return;
-  localStorage.removeItem('tc_data');renderCalendar();showToast('データを削除しました');
+  localStorage.removeItem('tc_data');renderCalendar();renderExport();showToast('データを削除しました');
 }
 
 /* INIT */
