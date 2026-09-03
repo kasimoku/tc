@@ -4,27 +4,49 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>タイムカード</title>
-<meta name="theme-color" content="#0f0f11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TIMECARD">
+<script>(function(){var t=null;try{t=localStorage.getItem('tc_theme')}catch(e){}
+if(t!=='light'&&t!=='dark'){try{t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}catch(e){t='dark'}}
+document.documentElement.setAttribute('data-theme',t);
+document.write('<meta name="theme-color" content="'+(t==='light'?'#f5f5f8':'#0f0f11')+'">');})();</script>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{
+  color-scheme:dark;
   --bg:#0f0f11;--surface:#1a1a1f;--surface2:#22222a;
   --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.15);
   --text:#f0f0f2;--text2:#888894;--text3:#555560;
   --accent:#7c6cfa;--accent2:#5a4de0;
   --green:#3ecf8e;--red:#f06b6b;--amber:#f0a030;
+  --blue:#6b8fcc;--break:#6f6f7e;
+  --topbar:rgba(15,15,17,.93);
+  --overlay:rgba(0,0,0,.75);
+  --accent-soft:rgba(124,108,250,.10);
+  --worked-bg:rgba(62,207,142,.10);--worked-bg2:rgba(62,207,142,.18);--worked-border:rgba(62,207,142,.25);
   --mono:'DM Mono',monospace;--sans:'Noto Sans JP',sans-serif;
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f5f5f8;--surface:#ffffff;--surface2:#eeeef3;
+  --border:rgba(18,18,32,.10);--border2:rgba(18,18,32,.20);
+  --text:#17171c;--text2:#5c5c68;--text3:#8a8a96;
+  --accent:#5b4bd6;--accent2:#4436c0;
+  --green:#0f9a63;--red:#d24b4b;--amber:#b8760c;
+  --blue:#3a6ba8;--break:#6f6f7e;
+  --topbar:rgba(245,245,248,.93);
+  --overlay:rgba(18,18,32,.45);
+  --accent-soft:rgba(91,75,214,.10);
+  --worked-bg:rgba(15,154,99,.10);--worked-bg2:rgba(15,154,99,.18);--worked-border:rgba(15,154,99,.28);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;min-height:100vh;padding-bottom:calc(80px + env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 
-.top-bar{position:sticky;top:0;z-index:50;background:rgba(15,15,17,.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:calc(12px + env(safe-area-inset-top)) 18px 12px;display:flex;align-items:center;gap:10px}
+.top-bar{position:sticky;top:0;z-index:50;background:var(--topbar);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:calc(12px + env(safe-area-inset-top)) 18px 12px;display:flex;align-items:center;gap:10px}
 .app-name{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.08em}
 .top-actions{margin-left:auto;display:flex;align-items:center;gap:7px}
 .user-chip{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 12px 5px 7px;cursor:pointer;font-size:13px;color:var(--text2);transition:border-color .2s}
@@ -35,7 +57,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .icon-btn svg{width:15px;height:15px}
 
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);align-items:center;justify-content:center;padding:16px}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--overlay);align-items:center;justify-content:center;padding:16px}
 .modal-overlay.open{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:24px 22px 20px;width:min(420px,100%)}
 .modal h3{font-size:16px;font-weight:500;margin-bottom:14px}
@@ -50,6 +72,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .input-label{font-size:11px;color:var(--text3)}
 .time-inp{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:15px;color:var(--text3);font-family:var(--mono);outline:none;width:100%;min-width:0;transition:border-color .15s}
 .time-inp:focus{border-color:var(--accent)}
+.time-inp::-webkit-calendar-picker-indicator{display:none}
+.time-inp::-webkit-date-and-time-value{text-align:center}
 .time-inp:valid{color:var(--text)}
 
 .main{max-width:580px;margin:0 auto;padding:20px 15px 0}
@@ -67,16 +91,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px}
 .cal-dow{text-align:center;font-size:11px;color:var(--text3);padding:6px 0;letter-spacing:.06em}
 .cal-dow:first-child{color:var(--red)}
-.cal-dow:last-child{color:#6b8fcc}
+.cal-dow:last-child{color:var(--blue)}
 .cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;transition:all .15s;position:relative;border:1px solid transparent;gap:3px}
 .cal-cell:hover{background:var(--surface2);border-color:var(--border)}
 .cal-cell.empty{pointer-events:none}
-.cal-cell.today{border-color:var(--accent)!important;background:rgba(124,108,250,.08)}
-.cal-cell.worked{background:rgba(62,207,142,.1);border-color:rgba(62,207,142,.25)}
-.cal-cell.worked:hover{background:rgba(62,207,142,.18)}
+.cal-cell.today{border-color:var(--accent)!important;background:var(--accent-soft)}
+.cal-cell.worked{background:var(--worked-bg);border-color:var(--worked-border)}
+.cal-cell.worked:hover{background:var(--worked-bg2)}
 .cal-day{font-size:13px;font-family:var(--mono);line-height:1}
 .cal-cell.sun .cal-day{color:var(--red)}
-.cal-cell.sat .cal-day{color:#6b8fcc}
+.cal-cell.sat .cal-day{color:var(--blue)}
 .cal-cell.other-month .cal-day{color:var(--text3)}
 .cal-hours{font-size:9px;font-family:var(--mono);color:var(--green)}
 .cal-summary{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 16px}
@@ -92,43 +116,48 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .sch-date-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--text2);transition:all .15s;display:flex;align-items:center}
 .sch-date-btn:hover{border-color:var(--border2);color:var(--text);background:var(--surface2)}
 .sch-date-btn svg{width:14px;height:14px}
-.sch-date-label{font-family:var(--mono);font-size:17px;font-weight:500;color:#fff}
-.sec{font-size:13px;letter-spacing:.12em;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sch-date-label{font-family:var(--mono);font-size:17px;font-weight:500;color:var(--text)}
+.sec{font-size:13px;letter-spacing:.12em;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .sec::after{content:'';flex:1;height:1px;background:var(--border)}
 
 /* TIMELINE */
 .tl-half{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
-.tl-period{font-size:13px;font-family:var(--mono);color:#fff;letter-spacing:.08em;margin-bottom:10px}
+.tl-period{font-size:13px;font-family:var(--mono);color:var(--text);letter-spacing:.08em;margin-bottom:10px}
 .tl-axis{position:relative;height:14px;margin-bottom:4px}
-.tl-tick{position:absolute;font-size:12px;color:#fff;font-family:var(--mono)}
+.tl-tick{position:absolute;font-size:12px;color:var(--text);font-family:var(--mono)}
 .tl-track{position:relative;height:32px;background:var(--surface2);border-radius:8px;margin-bottom:10px;cursor:crosshair;overflow:hidden}
 .tl-gridlines{position:absolute;inset:0;display:flex;pointer-events:none;border-radius:8px;overflow:hidden}
 .tl-gcell{flex:1;border-right:1px solid var(--border)}
 .tl-gcell:last-child{border-right:none}
 .tl-bar{position:absolute;top:4px;height:24px;border-radius:5px;display:flex;align-items:center;overflow:hidden;cursor:pointer;transition:opacity .15s;z-index:2}
 .tl-bar:hover{opacity:.82}
+.tl-bar.brk{background:repeating-linear-gradient(45deg,var(--break),var(--break) 5px,rgba(255,255,255,.16) 5px,rgba(255,255,255,.16) 10px)}
 .tl-bar-text{font-size:10px;font-weight:500;color:#fff;white-space:nowrap;padding:0 6px;overflow:hidden;text-overflow:ellipsis}
-.tl-hint{font-size:13px;color:#fff;text-align:center;padding:2px 0 4px}
+.tl-hint{font-size:13px;color:var(--text2);text-align:center;padding:2px 0 4px}
 .task-list{display:flex;flex-direction:column;gap:7px}
 .task-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;animation:slideIn .18s ease}
 @keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .task-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .task-info{flex:1;min-width:0}
-.task-name-d{font-size:15px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-.task-time-d{font-family:var(--mono);font-size:13px;color:#fff}
+.task-name-d{font-size:15px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.task-time-d{font-family:var(--mono);font-size:13px;color:var(--text2)}
 .task-actions{display:flex;gap:4px;flex-shrink:0}
 .task-act-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;border-radius:5px;transition:all .15s;display:flex}
-.task-act-btn:hover{color:var(--accent);background:rgba(124,108,250,.1)}
+.task-act-btn:hover{color:var(--accent);background:var(--accent-soft)}
 .task-act-btn.del:hover{color:var(--red);background:rgba(240,107,107,.1)}
 .task-act-btn svg{width:13px;height:13px}
-.add-task-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:8px;padding:9px;font-size:14px;color:#fff;cursor:pointer;font-family:var(--sans);transition:all .15s;margin-top:10px}
+.add-task-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:8px;padding:9px;font-size:14px;color:var(--text);cursor:pointer;font-family:var(--sans);transition:all .15s;margin-top:10px}
 .add-task-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tl-btns{display:flex;gap:8px;margin-top:10px}
+.tl-btns .add-task-btn{margin-top:0;flex:1;width:auto}
+.brk-btn{flex-shrink:0;background:none;border:1px dashed var(--border2);border-radius:8px;padding:9px 14px;font-size:14px;color:var(--text);cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap}
+.brk-btn:hover{border-color:var(--break);color:var(--break);background:var(--surface2)}
 
 /* DAILY SUMMARY */
 .daily-summary{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-top:14px;display:flex;align-items:center;justify-content:space-between}
-.daily-summary-label{font-size:14px;color:#fff}
+.daily-summary-label{font-size:14px;color:var(--text)}
 .daily-summary-value{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--amber)}
-.daily-summary-sub{font-size:13px;color:#fff;margin-top:2px}
+.daily-summary-sub{font-size:13px;color:var(--text2);margin-top:2px}
 
 /* CAT CHIPS */
 .cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px}
@@ -165,6 +194,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 <div class="top-bar">
   <span class="app-name">TIMECARD</span>
   <div class="top-actions">
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="テーマ切替"></button>
     <button class="icon-btn" onclick="openSettings()" title="カテゴリ設定">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
@@ -309,9 +339,15 @@ const DEFAULT_CATS=[
   {label:'その他',color:'#888780'},
 ];
 
+const BREAK_LABEL='休憩';
+const BREAK_MIN=30;
+const SUN_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+const MOON_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
 let cats=[];
 let editCats=[];
 let editingTaskIdx=-1;
+let editingIsBreak=false;
 let modalSelectedCat='';
 let calYear=new Date().getFullYear();
 let calMonth=new Date().getMonth();
@@ -330,12 +366,44 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
-function calcTaskMinutes(day){
+/* THEME */
+function currentTheme(){return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)meta.setAttribute('content',t==='light'?'#f5f5f8':'#0f0f11');
+  const btn=document.getElementById('themeBtn');
+  btn.innerHTML=t==='light'?MOON_SVG:SUN_SVG;
+  btn.title=t==='light'?'ダークモードに切替':'ライトモードに切替';
+}
+function toggleTheme(){
+  const t=currentTheme()==='light'?'dark':'light';
+  try{localStorage.setItem('tc_theme',t);}catch(e){}
+  applyTheme(t);
+}
+try{
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',e=>{
+    if(!localStorage.getItem('tc_theme'))applyTheme(e.matches?'light':'dark');
+  });
+}catch(e){}
+
+function isBreak(t){return !!t.break;}
+function sumMinutes(day,wantBreak){
   let total=0;
   (day.tasks||[]).forEach(t=>{
+    if(isBreak(t)!==wantBreak)return;
     if(t.start&&t.end){const diff=timeToMin(t.end)-timeToMin(t.start);if(diff>0)total+=diff;}
   });
   return total;
+}
+function calcTaskMinutes(day){return sumMinutes(day,false);}
+function calcBreakMinutes(day){return sumMinutes(day,true);}
+/* 既存タスクと時間帯が重なるものを返す（skipIdx は編集中のタスク） */
+function findOverlap(tasks,sM,eM,skipIdx){
+  return (tasks||[]).find((t,i)=>{
+    if(i===skipIdx||!t.start||!t.end)return false;
+    return sM<timeToMin(t.end)&&eM>timeToMin(t.start);
+  })||null;
 }
 function minsToHMS(mins){const h=Math.floor(mins/60),m=mins%60;return `${h}:${String(m).padStart(2,'0')}`;}
 
@@ -430,8 +498,10 @@ function renderSchedule(){
 }
 function renderDailySummary(day){
   const mins=calcTaskMinutes(day);
+  const brk=calcBreakMinutes(day);
+  const n=(day.tasks||[]).filter(t=>!isBreak(t)&&t.start&&t.end).length;
   document.getElementById('dailySumValue').textContent=minsToHMS(mins);
-  document.getElementById('dailySumSub').textContent=`${(day.tasks||[]).filter(t=>t.start&&t.end).length}件のタスク合計`;
+  document.getElementById('dailySumSub').textContent=`${n}件のタスク合計`+(brk?` ・ 休憩 ${minsToHMS(brk)}`:'');
 }
 
 /* TASK MODAL */
@@ -457,9 +527,11 @@ function buildModalCats(currentCat){
 function openTaskModal(idx,presetStart){
   const{day}=getDayData(getSchISO());
   editingTaskIdx=idx;modalSelectedCat='';
+  editingIsBreak=idx>=0&&isBreak(day.tasks[idx]);
+  document.getElementById('modalCatRow').style.display=editingIsBreak?'none':'flex';
   if(idx>=0){
     const t=day.tasks[idx];
-    document.getElementById('taskModalTitle').textContent='タスクを編集';
+    document.getElementById('taskModalTitle').textContent=editingIsBreak?'休憩を編集':'タスクを編集';
     document.getElementById('mStart').value=t.start||'';
     document.getElementById('mEnd').value=t.end||'';
     document.getElementById('mName').value=t.name;
@@ -469,7 +541,11 @@ function openTaskModal(idx,presetStart){
     const mStart=document.getElementById('mStart');
     const mEnd=document.getElementById('mEnd');
     [mStart,mEnd].forEach(el=>{el.type='text';el.value='';el.type='time';});
-    if(presetStart)mStart.value=presetStart;
+    if(presetStart){
+      mStart.value=presetStart;
+      const endMin=Math.min(timeToMin(presetStart)+60,24*60-1);
+      mEnd.value=`${String(Math.floor(endMin/60)).padStart(2,'0')}:${String(endMin%60).padStart(2,'0')}`;
+    }
     document.getElementById('mName').value='';
     buildModalCats('');
   }
@@ -480,10 +556,14 @@ function saveTask(){
   const s=document.getElementById('mStart').value;
   const e=document.getElementById('mEnd').value;
   const n=document.getElementById('mName').value.trim();
+  if(!s||!e){showToast('開始と終了の時刻を入力してください');return;}
+  if(s>=e){showToast('終了は開始より後にしてください');return;}
   if(!n){showToast('タスク内容を入力してください');return;}
-  if(s&&e&&s>=e){showToast('終了は開始より後にしてください');return;}
   const iso=getSchISO();const{data,day}=getDayData(iso);
-  const task={start:s||null,end:e||null,name:n,category:modalSelectedCat||'その他'};
+  const dup=findOverlap(day.tasks,timeToMin(s),timeToMin(e),editingTaskIdx);
+  if(dup){showToast(`「${dup.name}」(${dup.start}–${dup.end})と重複しています`);return;}
+  const task={start:s,end:e,name:n,category:editingIsBreak?BREAK_LABEL:(modalSelectedCat||'その他')};
+  if(editingIsBreak)task.break=true;
   if(editingTaskIdx>=0)day.tasks[editingTaskIdx]=task;
   else day.tasks.push(task);
   data[iso]=day;saveStorage(data);closeModal('taskModal');
@@ -493,9 +573,28 @@ function saveTask(){
 }
 document.getElementById('taskModal').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)saveTask();});
 
-function delTask(i){
-  if(!confirm('このタスクを削除しますか？'))return;
+/* 30分の休憩スタンプ。AMは10:00・PMは12:00を起点に、空いている直近の30分枠へ入れる */
+function addBreak(startH,endH){
   const iso=getSchISO();const{data,day}=getDayData(iso);
+  const tasks=day.tasks||[];
+  const lo=startH*60,hi=endH*60;
+  const anchor=Math.round((startH===0?10*60:12*60)/BREAK_MIN)*BREAK_MIN;
+  const free=m=>!findOverlap(tasks,m,m+BREAK_MIN,-1);
+  let slot=null;
+  for(let m=anchor;m+BREAK_MIN<=hi;m+=BREAK_MIN){if(free(m)){slot=m;break;}}
+  if(slot===null)for(let m=anchor-BREAK_MIN;m>=lo;m-=BREAK_MIN){if(free(m)){slot=m;break;}}
+  if(slot===null){showToast('この時間帯に空きがありません');return;}
+  const fmt=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+  const start=fmt(slot),end=fmt(slot+BREAK_MIN);
+  day.tasks.push({start,end,name:BREAK_LABEL,category:BREAK_LABEL,break:true});
+  data[iso]=day;saveStorage(data);
+  renderTimeline(iso,day);renderDailySummary(day);
+  showToast(`休憩 ${start}–${end} を追加しました`);
+}
+
+function delTask(i){
+  const iso=getSchISO();const{data,day}=getDayData(iso);
+  if(!confirm(isBreak(day.tasks[i])?'この休憩を削除しますか？':'このタスクを削除しますか？'))return;
   day.tasks.splice(i,1);data[iso]=day;saveStorage(data);
   renderTimeline(iso,day);renderDailySummary(day);showToast('削除しました');
 }
@@ -538,11 +637,12 @@ function renderTimeline(iso,day){
       const sM=timeToMin(t.start),eM=timeToMin(t.end);
       const cS=Math.max(sM,half.startH*60),cE=Math.min(eM,half.endH*60);
       if(cE<=cS)return;
+      const brk=isBreak(t);
       const c=catByLabel(t.category);
-      const bar=document.createElement('div');bar.className='tl-bar';
+      const bar=document.createElement('div');bar.className='tl-bar'+(brk?' brk':'');
       bar.style.left=((cS-half.startH*60)/totalMin*100).toFixed(2)+'%';
       bar.style.width=((cE-cS)/totalMin*100).toFixed(2)+'%';
-      bar.style.background=c.color;
+      if(!brk)bar.style.background=c.color;
       const txt=document.createElement('span');txt.className='tl-bar-text';txt.textContent=t.name;bar.appendChild(txt);
       bar.addEventListener('click',e=>{e.stopPropagation();openTaskModal(i,null);});
       track.appendChild(bar);
@@ -560,9 +660,10 @@ function renderTimeline(iso,day){
       const list=document.createElement('div');list.className='task-list';
       tasksInHalf.forEach(t=>{
         const c=catByLabel(t.category);
+        const dotColor=isBreak(t)?'var(--break)':c.color;
         const item=document.createElement('div');item.className='task-item';
         item.innerHTML=`
-          <div class="task-dot" style="background:${c.color}"></div>
+          <div class="task-dot" style="background:${dotColor}"></div>
           <div class="task-info">
             <div class="task-name-d">${esc(t.name)}</div>
             <div class="task-time-d">${t.start||'??:??'} – ${t.end||'??:??'} · ${esc(t.category)}</div>
@@ -578,7 +679,11 @@ function renderTimeline(iso,day){
       lw.appendChild(list);wrap.appendChild(lw);
     }
 
-    const addBtn=document.createElement('button');addBtn.className='add-task-btn';addBtn.textContent='＋ タスクを追加';addBtn.onclick=()=>openTaskModal(-1,'');wrap.appendChild(addBtn);
+    const btns=document.createElement('div');btns.className='tl-btns';
+    const addBtn=document.createElement('button');addBtn.className='add-task-btn';addBtn.textContent='＋ タスクを追加';addBtn.onclick=()=>openTaskModal(-1,'');
+    const brkBtn=document.createElement('button');brkBtn.className='brk-btn';brkBtn.textContent='☕ 休憩 30分';brkBtn.title='30分の休憩を追加';
+    brkBtn.onclick=()=>addBreak(half.startH,half.endH);
+    btns.appendChild(addBtn);btns.appendChild(brkBtn);wrap.appendChild(btns);
     el.appendChild(wrap);
   });
 }
@@ -655,6 +760,7 @@ function clearAll(){
 
 /* INIT */
 function init(){
+  applyTheme(currentTheme());
   loadCats();updateUserChip();renderCalendar();
   if(!localStorage.getItem('tc_name'))openNameModal();
 }
