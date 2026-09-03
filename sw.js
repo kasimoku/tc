@@ -1,4 +1,4 @@
-const CACHE = 'timecard-v2';
+const CACHE = 'timecard-v3';
 const ASSETS = [
   './',
   'index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   'icon-512.png',
   'apple-touch-icon.png',
   'break-icon.png',
+  't-icon.png',
 ];
 
 self.addEventListener('install', e => {
