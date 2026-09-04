@@ -230,6 +230,13 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-del:hover{background:rgba(240,107,107,.16)}
 .proj-del svg{width:17px;height:17px}
 .proj-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.add-toggle{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:12px;padding:11px;font-size:18px;color:var(--text2);background:none;border:1px dashed var(--border2);border-radius:9px;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.add-toggle:hover{color:var(--accent);border-color:var(--accent)}
+.add-plus{width:17px;height:17px;flex-shrink:0;transition:transform .18s}
+.add-toggle.open{color:var(--accent);border-color:var(--accent);border-style:solid}
+.add-toggle.open .add-plus{transform:rotate(45deg)}
+.add-proj-form{display:none;margin-top:12px}
+.add-proj-form.open{display:block}
 
 /* REPORT */
 .rep-presets{display:flex;gap:8px;margin-bottom:14px}
@@ -419,19 +426,24 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
       <div class="sec">案件番号</div>
       <div class="export-card">
         <div class="cat-edit-list" id="projManageList"></div>
-        <div class="set-sec" style="margin-top:18px">新しい案件を追加</div>
-        <div class="input-group">
-          <span class="input-label">部門</span>
-          <select class="t-input" id="newProjDept" onchange="updateProjPreview()"></select>
-        </div>
-        <div class="add-proj-row">
-          <div class="input-group"><span class="input-label">年月</span><input class="t-input mono-in" id="newProjYm" maxlength="5" inputmode="numeric" placeholder="02609" oninput="updateProjPreview()"></div>
-          <div class="input-group"><span class="input-label">番号</span><input class="t-input mono-in" id="newProjNo" maxlength="3" inputmode="numeric" placeholder="001" oninput="updateProjPreview()"></div>
-        </div>
-        <div class="proj-preview" id="projPreview">—</div>
-        <div class="add-proj-row2">
-          <input class="t-input" id="newProjName" placeholder="案件名（任意）" maxlength="30">
-          <button class="btn btn-ghost" onclick="addProject()" style="flex-shrink:0;white-space:nowrap">追加</button>
+        <button class="add-toggle" id="addProjToggle" onclick="toggleAddProj()" aria-expanded="false">
+          <svg class="add-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新しい案件を追加
+        </button>
+        <div class="add-proj-form" id="addProjForm">
+          <div class="input-group">
+            <span class="input-label">部門</span>
+            <select class="t-input" id="newProjDept" onchange="updateProjPreview()"></select>
+          </div>
+          <div class="add-proj-row">
+            <div class="input-group"><span class="input-label">年月</span><input class="t-input mono-in" id="newProjYm" maxlength="5" inputmode="numeric" placeholder="02609" oninput="updateProjPreview()"></div>
+            <div class="input-group"><span class="input-label">番号</span><input class="t-input mono-in" id="newProjNo" maxlength="3" inputmode="numeric" placeholder="001" oninput="updateProjPreview()"></div>
+          </div>
+          <div class="proj-preview" id="projPreview">—</div>
+          <div class="add-proj-row2">
+            <input class="t-input" id="newProjName" placeholder="案件名（任意）" maxlength="30">
+            <button class="btn btn-primary" onclick="addProject()" style="flex-shrink:0;white-space:nowrap">追加</button>
+          </div>
         </div>
       </div>
 
@@ -1117,6 +1129,15 @@ function renderProjManage(){
     list.appendChild(item);
   });
 }
+function toggleAddProj(open){
+  const form=document.getElementById('addProjForm');
+  const btn=document.getElementById('addProjToggle');
+  const next=open===undefined?!form.classList.contains('open'):open;
+  form.classList.toggle('open',next);
+  btn.classList.toggle('open',next);
+  btn.setAttribute('aria-expanded',next);
+  if(next)document.getElementById('newProjNo').focus();
+}
 function toggleProject(code){
   openProjCode=openProjCode===code?null:code;
   renderProjManage();
@@ -1155,7 +1176,7 @@ function addProject(){
   openProjCode=code;
   document.getElementById('newProjNo').value='';
   document.getElementById('newProjName').value='';
-  updateProjPreview();renderProjManage();renderCalendar();
+  updateProjPreview();toggleAddProj(false);renderProjManage();renderCalendar();
   showToast(`${code} を追加しました`);
 }
 function removeProject(i){
@@ -1294,10 +1315,6 @@ function renderExport(){
     wrap.appendChild(em);return;
   }
   wrap.appendChild(metricsRow(days,mins));
-  if(projMins.size){
-    const card=projSumCard(projMins);card.style.marginBottom='14px';
-    wrap.appendChild(card);
-  }
 }
 function exportJSON(all){
   const name=localStorage.getItem('tc_name')||'未設定';
