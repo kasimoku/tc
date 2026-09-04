@@ -85,6 +85,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .tab{flex:1;text-align:center;padding:9px 2px;font-size:20px;color:var(--text2);border-radius:8px;cursor:pointer;border:none;background:none;font-family:var(--sans);transition:all .15s}
 .tab.active{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
 @media (max-width:360px){.tab{font-size:17px}}
+.subtab-bar{display:flex;gap:6px;margin-bottom:18px}
+.subtab{flex:1;text-align:center;padding:8px 2px;font-size:18px;color:var(--text3);border-radius:99px;cursor:pointer;border:1px solid var(--border);background:none;font-family:var(--sans);transition:all .15s}
+.subtab:hover{color:var(--text2);border-color:var(--border2)}
+.subtab.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+@media (max-width:360px){.subtab{font-size:16px}}
 
 /* CALENDAR */
 .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
@@ -203,6 +208,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-item{display:flex;align-items:center;gap:9px;background:var(--surface2);border-radius:9px;padding:9px 10px;border:1px solid var(--border);min-width:0}
 .proj-code{font-family:var(--mono);font-size:18px;color:var(--text);white-space:nowrap;flex-shrink:0}
 .proj-name-in{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text2);font-size:17px;font-family:var(--sans)}
+.proj-use{font-size:15px;color:var(--text3);white-space:nowrap;flex-shrink:0}
 
 /* PROJECT SUMMARY */
 .proj-sum-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2px 16px}
@@ -306,22 +312,6 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
   <div class="modal">
     <h3>設定</h3>
     <div class="settings-body">
-      <div class="set-sec">案件番号</div>
-      <div class="cat-edit-list" id="projEditList"></div>
-      <div class="input-group" style="margin-top:10px">
-        <span class="input-label">部門</span>
-        <select class="t-input" id="newProjDept" onchange="updateProjPreview()"></select>
-      </div>
-      <div class="add-proj-row">
-        <div class="input-group"><span class="input-label">年月</span><input class="t-input mono-in" id="newProjYm" maxlength="5" inputmode="numeric" placeholder="02609" oninput="updateProjPreview()"></div>
-        <div class="input-group"><span class="input-label">番号</span><input class="t-input mono-in" id="newProjNo" maxlength="3" inputmode="numeric" placeholder="001" oninput="updateProjPreview()"></div>
-      </div>
-      <div class="proj-preview" id="projPreview">—</div>
-      <div class="add-proj-row2">
-        <input class="t-input" id="newProjName" placeholder="案件名（任意）" maxlength="30">
-        <button class="btn btn-ghost" onclick="addProjItem()" style="flex-shrink:0;white-space:nowrap">追加</button>
-      </div>
-
       <div class="set-sec">タスク種別</div>
       <div class="cat-edit-list" id="catEditList"></div>
       <div class="add-cat-row">
@@ -343,7 +333,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
   <div class="tab-bar">
     <button class="tab active" onclick="switchTab('calendar',this)">カレンダー</button>
     <button class="tab" onclick="switchTab('schedule',this)">日程</button>
-    <button class="tab" onclick="switchTab('export',this)">出力</button>
+    <button class="tab" onclick="switchTab('manage',this)">管理</button>
   </div>
 
   <!-- CALENDAR -->
@@ -388,9 +378,38 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
     </div>
   </div>
 
-  <!-- EXPORT -->
-  <div id="tab-export" style="display:none">
-    <div class="sec">データ管理</div>
+  <!-- MANAGE -->
+  <div id="tab-manage" style="display:none">
+    <div class="subtab-bar">
+      <button class="subtab active" onclick="switchSubTab('projects',this)">案件管理</button>
+      <button class="subtab" onclick="switchSubTab('export',this)">データ出力</button>
+    </div>
+
+    <!-- 案件管理 -->
+    <div id="sub-projects">
+      <div class="sec">案件番号</div>
+      <div class="export-card">
+        <div class="cat-edit-list" id="projManageList"></div>
+        <div class="set-sec" style="margin-top:18px">新しい案件を追加</div>
+        <div class="input-group">
+          <span class="input-label">部門</span>
+          <select class="t-input" id="newProjDept" onchange="updateProjPreview()"></select>
+        </div>
+        <div class="add-proj-row">
+          <div class="input-group"><span class="input-label">年月</span><input class="t-input mono-in" id="newProjYm" maxlength="5" inputmode="numeric" placeholder="02609" oninput="updateProjPreview()"></div>
+          <div class="input-group"><span class="input-label">番号</span><input class="t-input mono-in" id="newProjNo" maxlength="3" inputmode="numeric" placeholder="001" oninput="updateProjPreview()"></div>
+        </div>
+        <div class="proj-preview" id="projPreview">—</div>
+        <div class="add-proj-row2">
+          <input class="t-input" id="newProjName" placeholder="案件名（任意）" maxlength="30">
+          <button class="btn btn-ghost" onclick="addProject()" style="flex-shrink:0;white-space:nowrap">追加</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- データ出力 -->
+    <div id="sub-export" style="display:none">
+    <div class="sec">データ出力</div>
     <div class="export-card">
       <div class="exp-period-nav">
         <button class="sch-date-btn" onclick="changeExpPeriod(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -417,6 +436,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         全データ削除
       </button>
+    </div>
     </div>
   </div>
 </div>
@@ -451,7 +471,6 @@ const DEPTS=[
 let cats=[];
 let editCats=[];
 let projects=[];
-let editProjects=[];
 let editingTaskIdx=-1;
 let editingIsBreak=false;
 let modalSelectedCat='';
@@ -943,35 +962,82 @@ function renderTimeline(iso,day){
 
 /* SETTINGS */
 function openSettings(){
-  loadCats();loadProjects();
+  loadCats();
   editCats=cats.map(c=>({...c}));
-  editProjects=projects.map(p=>({...p}));
-  renderCatEditList();renderProjEditList();
-  const dept=document.getElementById('newProjDept');
-  dept.innerHTML='';
-  DEPTS.forEach(d=>{
-    const op=document.createElement('option');op.value=d.code;op.textContent=`${d.code}｜${d.label}`;dept.appendChild(op);
-  });
-  document.getElementById('newProjYm').value=defaultYm();
-  document.getElementById('newProjNo').value='';
-  document.getElementById('newProjName').value='';
-  updateProjPreview();
+  renderCatEditList();
   document.getElementById('settingsModal').classList.add('open');
 }
-function renderProjEditList(){
-  const list=document.getElementById('projEditList');list.innerHTML='';
-  if(!editProjects.length){
+
+/* PROJECTS (管理タブ) — 編集はそのまま保存される */
+function initProjManage(){
+  const dept=document.getElementById('newProjDept');
+  if(!dept.options.length){
+    DEPTS.forEach(d=>{
+      const op=document.createElement('option');op.value=d.code;op.textContent=`${d.code}｜${d.label}`;dept.appendChild(op);
+    });
+  }
+  if(!document.getElementById('newProjYm').value)document.getElementById('newProjYm').value=defaultYm();
+  updateProjPreview();
+  renderProjManage();
+}
+/* この案件番号を使っているタスク数 */
+function projUsage(code){
+  let n=0;
+  Object.values(getStorage()).forEach(day=>{
+    (day.tasks||[]).forEach(t=>{if(t.project===code)n++;});
+  });
+  return n;
+}
+function renderProjManage(){
+  const list=document.getElementById('projManageList');if(!list)return;
+  list.innerHTML='';
+  if(!projects.length){
     const em=document.createElement('div');em.className='set-empty';em.textContent='まだ登録がありません';
     list.appendChild(em);return;
   }
-  editProjects.forEach((p,i)=>{
+  projects.forEach((p,i)=>{
+    const used=projUsage(p.code);
     const item=document.createElement('div');item.className='proj-item';
     item.innerHTML=`
       <span class="proj-code">${esc(p.code)}</span>
-      <input type="text" class="proj-name-in" value="${esc(p.name||'')}" maxlength="30" placeholder="案件名（任意）" oninput="editProjects[${i}].name=this.value">
-      <button class="del-cat-btn" onclick="removeProjItem(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+      <input type="text" class="proj-name-in" value="${esc(p.name||'')}" maxlength="30" placeholder="案件名（任意）" oninput="updateProjName(${i},this.value)">
+      ${used?`<span class="proj-use">${used}件</span>`:''}
+      <button class="del-cat-btn" onclick="removeProject(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
     list.appendChild(item);
   });
+}
+function updateProjName(i,v){
+  if(!projects[i])return;
+  projects[i].name=v.trim();saveProjects();
+  renderCalendar();
+  if(document.getElementById('tab-schedule').style.display!=='none')renderSchedule();
+}
+function addProject(){
+  const dept=document.getElementById('newProjDept').value;
+  const ym=document.getElementById('newProjYm').value.trim();
+  const no=document.getElementById('newProjNo').value.trim();
+  if(!/^\d{5}$/.test(ym)){showToast('年月は5桁の数字で入力してください');return;}
+  if(!/^\d{1,3}$/.test(no)){showToast('番号は3桁までの数字で入力してください');return;}
+  const code=`${dept}_${ym}_${no.padStart(3,'0')}`;
+  if(projects.some(p=>p.code===code)){showToast('その案件番号は登録済みです');return;}
+  projects.push({code,name:document.getElementById('newProjName').value.trim()});
+  projects.sort(sortProjects);saveProjects();
+  document.getElementById('newProjNo').value='';
+  document.getElementById('newProjName').value='';
+  updateProjPreview();renderProjManage();renderCalendar();
+  showToast(`${code} を追加しました`);
+}
+function removeProject(i){
+  const p=projects[i];if(!p)return;
+  const used=projUsage(p.code);
+  const msg=used
+    ? `${p.code} を削除しますか？\n${used}件のタスクで使用中です（タスクの記録自体は残ります）。`
+    : `${p.code} を削除しますか？`;
+  if(!confirm(msg))return;
+  projects.splice(i,1);saveProjects();
+  renderProjManage();renderCalendar();
+  if(document.getElementById('tab-schedule').style.display!=='none')renderSchedule();
+  showToast('削除しました');
 }
 function updateProjPreview(){
   const el=document.getElementById('projPreview');
@@ -981,23 +1047,6 @@ function updateProjPreview(){
     ? `${document.getElementById('newProjDept').value}_${ym}_${no.padStart(3,'0')}`
     : '—';
 }
-function addProjItem(){
-  const dept=document.getElementById('newProjDept').value;
-  const ym=document.getElementById('newProjYm').value.trim();
-  const no=document.getElementById('newProjNo').value.trim();
-  if(!/^\d{5}$/.test(ym)){showToast('年月は5桁の数字で入力してください');return;}
-  if(!/^\d{1,3}$/.test(no)){showToast('番号は3桁までの数字で入力してください');return;}
-  const code=`${dept}_${ym}_${no.padStart(3,'0')}`;
-  if(editProjects.some(p=>p.code===code)){showToast('その案件番号は登録済みです');return;}
-  editProjects.push({code,name:document.getElementById('newProjName').value.trim()});
-  editProjects.sort(sortProjects);
-  document.getElementById('newProjNo').value='';
-  document.getElementById('newProjName').value='';
-  updateProjPreview();
-  renderProjEditList();
-  showToast(`${code} を追加しました`);
-}
-function removeProjItem(i){editProjects.splice(i,1);renderProjEditList();}
 function renderCatEditList(){
   const list=document.getElementById('catEditList');list.innerHTML='';
   editCats.forEach((c,i)=>{
@@ -1020,8 +1069,6 @@ function saveSettings(){
   const valid=editCats.filter(c=>c.label.trim());
   if(!valid.length){showToast('タスク種別が1つ以上必要です');return;}
   cats=valid;saveCats();
-  projects=editProjects.map(p=>({code:p.code,name:(p.name||'').trim()})).sort(sortProjects);
-  saveProjects();
   closeModal('settingsModal');showToast('設定を保存しました');
   renderCalendar();
   if(document.getElementById('tab-schedule').style.display!=='none')renderSchedule();
@@ -1034,6 +1081,13 @@ function switchTab(name,btn){
   document.getElementById('tab-'+name).style.display='block';btn.classList.add('active');
   if(name==='calendar')renderCalendar();
   if(name==='schedule')renderSchedule();
+  if(name==='manage'){initProjManage();renderExport();}
+}
+function switchSubTab(name,btn){
+  ['projects','export'].forEach(n=>document.getElementById('sub-'+n).style.display=n===name?'block':'none');
+  document.querySelectorAll('.subtab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  if(name==='projects')renderProjManage();
   if(name==='export')renderExport();
 }
 
@@ -1132,14 +1186,14 @@ function handleImport(e){
         });
         projects=[...byCode.values()].sort(sortProjects);saveProjects();
       }
-      updateUserChip();renderCalendar();renderExport();showToast('インポートしました');
+      updateUserChip();renderCalendar();renderProjManage();renderExport();showToast('インポートしました');
     }catch(err){showToast('JSONの形式が正しくありません');}
   };
   reader.readAsText(file);e.target.value='';
 }
 function clearAll(){
   if(!confirm('すべての記録を削除しますか？この操作は取り消せません。'))return;
-  localStorage.removeItem('tc_data');renderCalendar();renderExport();showToast('データを削除しました');
+  localStorage.removeItem('tc_data');renderCalendar();renderProjManage();renderExport();showToast('データを削除しました');
 }
 
 /* INIT */
