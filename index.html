@@ -210,6 +210,15 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-name-in{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text2);font-size:17px;font-family:var(--sans)}
 .proj-use{font-size:15px;color:var(--text3);white-space:nowrap;flex-shrink:0}
 
+/* REPORT */
+.rep-presets{display:flex;gap:8px;margin-bottom:14px}
+.rep-preset{flex:1;padding:8px 2px;font-size:18px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.rep-preset:hover{border-color:var(--accent);color:var(--accent)}
+.date-in{font-family:var(--mono);font-size:17px;min-height:44px;padding-left:8px;padding-right:6px}
+.date-in::-webkit-calendar-picker-indicator{margin-left:0;padding:0;opacity:.55}
+@media (max-width:360px){.date-in{font-size:15px}.rep-preset{font-size:16px}}
+.rep-note{font-size:17px;color:var(--text3);text-align:center;padding:10px 0}
+
 /* PROJECT SUMMARY */
 .proj-sum-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2px 16px}
 .proj-sum-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--border)}
@@ -356,8 +365,6 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
         </div>
       </div>
     </div>
-    <div class="sec" id="projSumTitle" style="display:none;margin-top:20px">案件別 実働時間</div>
-    <div id="projSummary"></div>
   </div>
 
   <!-- SCHEDULE -->
@@ -382,6 +389,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
   <div id="tab-manage" style="display:none">
     <div class="subtab-bar">
       <button class="subtab active" onclick="switchSubTab('projects',this)">案件管理</button>
+      <button class="subtab" onclick="switchSubTab('report',this)">集計</button>
       <button class="subtab" onclick="switchSubTab('export',this)">データ出力</button>
     </div>
 
@@ -404,6 +412,23 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
           <input class="t-input" id="newProjName" placeholder="案件名（任意）" maxlength="30">
           <button class="btn btn-ghost" onclick="addProject()" style="flex-shrink:0;white-space:nowrap">追加</button>
         </div>
+      </div>
+    </div>
+
+    <!-- 集計 -->
+    <div id="sub-report" style="display:none">
+      <div class="sec">案件別 実働時間</div>
+      <div class="export-card">
+        <div class="rep-presets">
+          <button class="rep-preset" onclick="setRepPreset('thisMonth')">今月</button>
+          <button class="rep-preset" onclick="setRepPreset('lastMonth')">先月</button>
+          <button class="rep-preset" onclick="setRepPreset('period')">今期</button>
+        </div>
+        <div class="add-proj-row" style="margin-top:0">
+          <div class="input-group"><span class="input-label">開始日</span><input class="t-input date-in" type="date" id="repFrom" onchange="renderReport()"></div>
+          <div class="input-group"><span class="input-label">終了日</span><input class="t-input date-in" type="date" id="repTo" onchange="renderReport()"></div>
+        </div>
+        <div id="repTotals" style="margin-top:14px"></div>
       </div>
     </div>
 
@@ -582,7 +607,6 @@ function renderCalendar(){
   const prevDays=new Date(calYear,calMonth,0).getDate();
   const today=toISO(new Date());
   let workedDays=0,totalMins=0;
-  const projMins=new Map();
 
   for(let i=firstDay-1;i>=0;i--){
     const cell=document.createElement('div');cell.className='cal-cell empty other-month';
@@ -596,11 +620,6 @@ function renderCalendar(){
     const hasWork=taskMins>0;
     const dow=new Date(calYear,calMonth,d).getDay();
     if(hasWork){workedDays++;totalMins+=taskMins;}
-    ((dayData&&dayData.tasks)||[]).forEach(t=>{
-      if(isBreak(t)||!t.start||!t.end)return;
-      const m=timeToMin(t.end)-timeToMin(t.start);
-      if(m>0)projMins.set(t.project||'',(projMins.get(t.project||'')||0)+m);
-    });
 
     const cell=document.createElement('div');
     let cls='cal-cell';
@@ -626,15 +645,26 @@ function renderCalendar(){
 
   document.getElementById('calDays').textContent=workedDays+'日';
   document.getElementById('calHours').textContent=minsToHMS(totalMins);
-  renderProjSummary(projMins);
 }
-/* 案件番号ごとの実働時間（休憩を除く）。表示中の月が対象 */
-function renderProjSummary(projMins){
-  const title=document.getElementById('projSumTitle');
-  const wrap=document.getElementById('projSummary');
-  wrap.innerHTML='';
-  if(!projMins.size){title.style.display='none';return;}
-  title.style.display='flex';
+
+/* 期間集計。出勤日数・実働時間・案件番号ごとの内訳（休憩は除く） */
+function aggregateRange(from,to){
+  const data=getStorage();
+  let days=0,mins=0;const projMins=new Map();
+  Object.keys(data).forEach(iso=>{
+    if(iso<from||iso>to)return;
+    const day=data[iso];
+    const m=calcTaskMinutes(day);
+    if(m>0){days++;mins+=m;}
+    (day.tasks||[]).forEach(t=>{
+      if(isBreak(t)||!t.start||!t.end)return;
+      const v=timeToMin(t.end)-timeToMin(t.start);
+      if(v>0)projMins.set(t.project||'',(projMins.get(t.project||'')||0)+v);
+    });
+  });
+  return {days,mins,projMins};
+}
+function projSumCard(projMins){
   const card=document.createElement('div');card.className='proj-sum-card';
   [...projMins.entries()].sort((a,b)=>b[1]-a[1]).forEach(([code,mins])=>{
     const p=code?projByCode(code):null;
@@ -647,7 +677,14 @@ function renderProjSummary(projMins){
       <div class="proj-sum-val">${minsToHMS(mins)}</div>`;
     card.appendChild(row);
   });
-  wrap.appendChild(card);
+  return card;
+}
+function metricsRow(days,mins){
+  const met=document.createElement('div');met.className='exp-metrics';
+  met.innerHTML=`
+    <div class="exp-metric"><div class="exp-metric-label">出勤日数</div><div class="exp-metric-value green">${days}日</div></div>
+    <div class="exp-metric"><div class="exp-metric-label">実働時間</div><div class="exp-metric-value amber">${minsToHMS(mins)}</div></div>`;
+  return met;
 }
 
 /* SCHEDULE */
@@ -1081,14 +1118,58 @@ function switchTab(name,btn){
   document.getElementById('tab-'+name).style.display='block';btn.classList.add('active');
   if(name==='calendar')renderCalendar();
   if(name==='schedule')renderSchedule();
-  if(name==='manage'){initProjManage();renderExport();}
+  if(name==='manage'){initProjManage();initReport();renderExport();}
 }
 function switchSubTab(name,btn){
-  ['projects','export'].forEach(n=>document.getElementById('sub-'+n).style.display=n===name?'block':'none');
+  ['projects','report','export'].forEach(n=>document.getElementById('sub-'+n).style.display=n===name?'block':'none');
   document.querySelectorAll('.subtab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
   if(name==='projects')renderProjManage();
+  if(name==='report')renderReport();
   if(name==='export')renderExport();
+}
+
+/* REPORT — 任意の期間を指定して集計する */
+function initReport(){
+  const from=document.getElementById('repFrom');
+  if(!from.value)setRepPreset('thisMonth');
+}
+function setRepPreset(kind){
+  const t=new Date();
+  let start,end;
+  if(kind==='thisMonth'){
+    start=new Date(t.getFullYear(),t.getMonth(),1);
+    end=new Date(t.getFullYear(),t.getMonth()+1,0);
+  }else if(kind==='lastMonth'){
+    start=new Date(t.getFullYear(),t.getMonth()-1,1);
+    end=new Date(t.getFullYear(),t.getMonth(),0);
+  }else{
+    const r=periodRange(0);start=r.start;end=r.end;
+  }
+  document.getElementById('repFrom').value=toISO(start);
+  document.getElementById('repTo').value=toISO(end);
+  renderReport();
+}
+function renderReport(){
+  const wrap=document.getElementById('repTotals');if(!wrap)return;
+  wrap.innerHTML='';
+  const from=document.getElementById('repFrom').value;
+  const to=document.getElementById('repTo').value;
+  if(!from||!to){
+    const n=document.createElement('div');n.className='rep-note';n.textContent='期間を指定してください';
+    wrap.appendChild(n);return;
+  }
+  if(from>to){
+    const n=document.createElement('div');n.className='rep-note';n.textContent='開始日が終了日より後になっています';
+    wrap.appendChild(n);return;
+  }
+  const{days,mins,projMins}=aggregateRange(from,to);
+  if(!days&&!projMins.size){
+    const n=document.createElement('div');n.className='rep-note';n.textContent='この期間の記録はまだありません';
+    wrap.appendChild(n);return;
+  }
+  wrap.appendChild(metricsRow(days,mins));
+  if(projMins.size)wrap.appendChild(projSumCard(projMins));
 }
 
 /* EXPORT / IMPORT */
@@ -1111,40 +1192,16 @@ function renderExport(){
     ? fmtDate(end).slice(5)
     : fmtDate(end);
   document.getElementById('expRange').textContent=`${fmtDate(start)} – ${endTxt}`;
-  const{records}=periodRecords();
-  let days=0,mins=0;const projMins=new Map();
-  Object.values(records).forEach(day=>{
-    const m=calcTaskMinutes(day);
-    if(m>0){days++;mins+=m;}
-    (day.tasks||[]).forEach(t=>{
-      if(isBreak(t)||!t.start||!t.end)return;
-      const v=timeToMin(t.end)-timeToMin(t.start);
-      if(v>0)projMins.set(t.project||'',(projMins.get(t.project||'')||0)+v);
-    });
-  });
+  const{from,to}=periodRecords();
+  const{days,mins,projMins}=aggregateRange(from,to);
   const wrap=document.getElementById('expTotals');wrap.innerHTML='';
   if(!days&&!projMins.size){
     const em=document.createElement('div');em.className='exp-empty';em.textContent='この期間の記録はまだありません';
     wrap.appendChild(em);return;
   }
-  const met=document.createElement('div');met.className='exp-metrics';
-  met.innerHTML=`
-    <div class="exp-metric"><div class="exp-metric-label">出勤日数</div><div class="exp-metric-value green">${days}日</div></div>
-    <div class="exp-metric"><div class="exp-metric-label">実働時間</div><div class="exp-metric-value amber">${minsToHMS(mins)}</div></div>`;
-  wrap.appendChild(met);
+  wrap.appendChild(metricsRow(days,mins));
   if(projMins.size){
-    const card=document.createElement('div');card.className='proj-sum-card';card.style.marginBottom='14px';
-    [...projMins.entries()].sort((a,b)=>b[1]-a[1]).forEach(([code,v])=>{
-      const p=code?projByCode(code):null;
-      const row=document.createElement('div');row.className='proj-sum-row';
-      row.innerHTML=`
-        <div class="proj-sum-info">
-          <div class="proj-sum-code${code?'':' none'}">${code?esc(code):'案件未設定'}</div>
-          ${p&&p.name?`<div class="proj-sum-name">${esc(p.name)}</div>`:''}
-        </div>
-        <div class="proj-sum-val">${minsToHMS(v)}</div>`;
-      card.appendChild(row);
-    });
+    const card=projSumCard(projMins);card.style.marginBottom='14px';
     wrap.appendChild(card);
   }
 }
@@ -1186,14 +1243,14 @@ function handleImport(e){
         });
         projects=[...byCode.values()].sort(sortProjects);saveProjects();
       }
-      updateUserChip();renderCalendar();renderProjManage();renderExport();showToast('インポートしました');
+      updateUserChip();renderCalendar();renderProjManage();renderReport();renderExport();showToast('インポートしました');
     }catch(err){showToast('JSONの形式が正しくありません');}
   };
   reader.readAsText(file);e.target.value='';
 }
 function clearAll(){
   if(!confirm('すべての記録を削除しますか？この操作は取り消せません。'))return;
-  localStorage.removeItem('tc_data');renderCalendar();renderProjManage();renderExport();showToast('データを削除しました');
+  localStorage.removeItem('tc_data');renderCalendar();renderProjManage();renderReport();renderExport();showToast('データを削除しました');
 }
 
 /* INIT */
