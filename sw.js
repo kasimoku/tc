@@ -1,4 +1,4 @@
-const CACHE = 'timecard-v5';
+const CACHE = 'timecard-v6';
 const SCOPE = new URL('./', location).pathname;
 const ASSETS = [
   './',
@@ -10,7 +10,7 @@ const ASSETS = [
   'tc-touch-icon-167.png',
   'tc-touch-icon-152.png',
   'break-icon.png',
-  't-icon.png',
+  'tc-favicon.png',
 ];
 
 self.addEventListener('install', e => {
