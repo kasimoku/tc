@@ -114,6 +114,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .cal-hours{font-size:14px;font-family:var(--mono);color:var(--green)}
 .cal-summary{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 16px}
 .cal-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.basis-switch{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:10px}
+.basis-btn{flex:1;padding:7px 2px;font-size:17px;color:var(--text3);border:none;border-radius:7px;background:none;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.basis-btn:hover{color:var(--text2)}
+.basis-btn.active{background:var(--accent-soft);color:var(--accent)}
+.cal-range{font-family:var(--mono);font-size:17px;color:var(--text3);text-align:center;margin-bottom:12px}
 .cal-metric{text-align:center}
 .cal-metric-label{font-size:17px;color:var(--text3);margin-bottom:5px;letter-spacing:.08em}
 .cal-metric-value{font-family:var(--mono);font-size:40px;font-weight:500}
@@ -389,6 +394,11 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
     </div>
     <div class="cal-grid" id="calGrid"></div>
     <div class="cal-summary">
+      <div class="basis-switch">
+        <button class="basis-btn" id="basisMonth" onclick="setCalBasis('month')">1ヶ月</button>
+        <button class="basis-btn" id="basisClosing" onclick="setCalBasis('closing')">締め期間</button>
+      </div>
+      <div class="cal-range" id="calRange">—</div>
       <div class="cal-summary-grid">
         <div class="cal-metric">
           <div class="cal-metric-label">出勤日数</div>
@@ -538,6 +548,8 @@ let cats=[];
 let editCats=[];
 let projects=[];
 let openProjCode=null;
+/* カレンダー下の集計を「1ヶ月」で見るか「16日〜翌15日」で見るか */
+let calBasis='month';
 let editingTaskIdx=-1;
 let editingIsBreak=false;
 let modalSelectedCat='';
@@ -685,8 +697,35 @@ function renderCalendar(){
     cell.innerHTML=`<span class="cal-day">${i}</span>`;grid.appendChild(cell);
   }
 
-  document.getElementById('calDays').textContent=workedDays+'日';
-  document.getElementById('calHours').textContent=minsToHMS(totalMins);
+  renderCalSummary(workedDays,totalMins);
+}
+/* 表示中の月 M に対し、締め期間は M-1/16 〜 M/15（M 月に締まる分） */
+function closingRangeOf(year,month){
+  return {start:new Date(year,month-1,CLOSING_DAY+1),end:new Date(year,month,CLOSING_DAY)};
+}
+function renderCalSummary(monthDays,monthMins){
+  const closing=calBasis==='closing';
+  document.getElementById('basisMonth').classList.toggle('active',!closing);
+  document.getElementById('basisClosing').classList.toggle('active',closing);
+  let days=monthDays,mins=monthMins,label;
+  if(closing){
+    const{start,end}=closingRangeOf(calYear,calMonth);
+    const agg=aggregateRange(toISO(start),toISO(end));
+    days=agg.days;mins=agg.mins;
+    const endTxt=start.getFullYear()===end.getFullYear()?fmtDate(end).slice(5):fmtDate(end);
+    label=`${fmtDate(start)} – ${endTxt}`;
+  }else{
+    const last=new Date(calYear,calMonth+1,0);
+    label=`${fmtDate(new Date(calYear,calMonth,1))} – ${fmtDate(last).slice(5)}`;
+  }
+  document.getElementById('calRange').textContent=label;
+  document.getElementById('calDays').textContent=days+'日';
+  document.getElementById('calHours').textContent=minsToHMS(mins);
+}
+function setCalBasis(b){
+  calBasis=b;
+  try{localStorage.setItem('tc_calbasis',b);}catch(e){}
+  renderCalendar();
 }
 
 /* 期間集計。出勤日数・実働時間・案件番号ごとの内訳（休憩は除く） */
@@ -1362,7 +1401,9 @@ function clearAll(){
 /* INIT */
 function init(){
   applyTheme(currentTheme());
-  loadCats();loadProjects();updateUserChip();renderCalendar();
+  loadCats();loadProjects();
+  try{if(localStorage.getItem('tc_calbasis')==='closing')calBasis='closing';}catch(e){}
+  updateUserChip();renderCalendar();
   if(!localStorage.getItem('tc_name'))openNameModal();
 }
 init();
