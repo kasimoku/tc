@@ -1,4 +1,4 @@
-const CACHE = 'timecard-v12';
+const CACHE = 'timecard-v13';
 const SCOPE = new URL('./', location).pathname;
 const ASSETS = [
   './',

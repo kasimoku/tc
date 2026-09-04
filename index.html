@@ -221,7 +221,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-yen{font-size:18px;color:var(--text3);flex-shrink:0}
 .proj-name-in{font-size:18px}
 .proj-profit-in{font-family:var(--mono);text-align:right;font-size:18px}
-.proj-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 6px}
+.proj-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 6px}
 .proj-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
 .proj-stat-label{font-size:clamp(13px,3.4vw,14px);color:var(--text3)}
 .proj-stat-val{font-family:var(--mono);font-size:clamp(15px,4.4vw,19px);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -1083,7 +1083,7 @@ function renderProjManage(){
     list.appendChild(em);return;
   }
   projects.forEach((p,i)=>{
-    const{count,mins}=projUsage(p.code);
+    const{mins}=projUsage(p.code);
     const col=deptColor(p.code);
     const profit=p.profit||0;
     const open=p.code===openProjCode;
@@ -1111,7 +1111,6 @@ function renderProjManage(){
         <div class="proj-stats">
           <div class="proj-stat"><span class="proj-stat-label">累計実働</span><span class="proj-stat-val">${mins>0?minsToHMS(mins):'—'}</span></div>
           <div class="proj-stat"><span class="proj-stat-label">概算時給</span><span class="proj-stat-val amber" id="projRate${i}">${rateVal(profit,mins)}</span></div>
-          <div class="proj-stat"><span class="proj-stat-label">タスク</span><span class="proj-stat-val">${count}件</span></div>
         </div>
         <button class="proj-del" onclick="removeProject(${i})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
