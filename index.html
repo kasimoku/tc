@@ -239,12 +239,9 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .add-proj-form.open{display:block}
 
 /* REPORT */
-.rep-presets{display:flex;gap:8px;margin-bottom:14px}
-.rep-preset{flex:1;padding:8px 2px;font-size:18px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:var(--sans);transition:all .15s}
-.rep-preset:hover{border-color:var(--accent);color:var(--accent)}
 .date-in{font-family:var(--mono);font-size:17px;min-height:44px;padding-left:8px;padding-right:6px}
 .date-in::-webkit-calendar-picker-indicator{margin-left:0;padding:0;opacity:.55}
-@media (max-width:360px){.date-in{font-size:15px}.rep-preset{font-size:16px}}
+@media (max-width:360px){.date-in{font-size:15px}}
 .rep-note{font-size:17px;color:var(--text3);text-align:center;padding:10px 0}
 
 /* PROJECT SUMMARY */
@@ -449,11 +446,6 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 
       <div class="sec" style="margin-top:22px">案件別 実働時間</div>
       <div class="export-card">
-        <div class="rep-presets">
-          <button class="rep-preset" onclick="setRepPreset('thisMonth')">今月</button>
-          <button class="rep-preset" onclick="setRepPreset('lastMonth')">先月</button>
-          <button class="rep-preset" onclick="setRepPreset('period')">今期</button>
-        </div>
         <div class="add-proj-row" style="margin-top:0">
           <div class="input-group"><span class="input-label">開始日</span><input class="t-input date-in" type="date" id="repFrom" onchange="renderReport()"></div>
           <div class="input-group"><span class="input-label">終了日</span><input class="t-input date-in" type="date" id="repTo" onchange="renderReport()"></div>
@@ -1245,24 +1237,13 @@ function switchSubTab(name,btn){
 }
 
 /* REPORT — 任意の期間を指定して集計する */
+/* 初期値は今月。以降はユーザーが入れた期間をそのまま使う */
 function initReport(){
   const from=document.getElementById('repFrom');
-  if(!from.value)setRepPreset('thisMonth');
-}
-function setRepPreset(kind){
+  if(from.value)return;
   const t=new Date();
-  let start,end;
-  if(kind==='thisMonth'){
-    start=new Date(t.getFullYear(),t.getMonth(),1);
-    end=new Date(t.getFullYear(),t.getMonth()+1,0);
-  }else if(kind==='lastMonth'){
-    start=new Date(t.getFullYear(),t.getMonth()-1,1);
-    end=new Date(t.getFullYear(),t.getMonth(),0);
-  }else{
-    const r=periodRange(0);start=r.start;end=r.end;
-  }
-  document.getElementById('repFrom').value=toISO(start);
-  document.getElementById('repTo').value=toISO(end);
+  from.value=toISO(new Date(t.getFullYear(),t.getMonth(),1));
+  document.getElementById('repTo').value=toISO(new Date(t.getFullYear(),t.getMonth()+1,0));
   renderReport();
 }
 function renderReport(){
