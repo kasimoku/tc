@@ -205,10 +205,19 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-preview{font-family:var(--mono);font-size:19px;color:var(--accent);text-align:center;margin-top:10px}
 .add-proj-row2{display:flex;gap:8px;margin-top:8px}
 .add-proj-row2 .t-input{flex:1;min-width:0}
-.proj-item{display:flex;align-items:center;gap:9px;background:var(--surface2);border-radius:9px;padding:9px 10px;border:1px solid var(--border);min-width:0}
+.proj-item{display:flex;flex-direction:column;gap:6px;background:var(--surface2);border-radius:9px;padding:9px 10px 10px;border:1px solid var(--border);border-left-width:4px;border-left-style:solid;min-width:0}
+.proj-item-top{display:flex;align-items:center;gap:8px;min-width:0}
+.dept-badge{font-family:var(--mono);font-size:15px;font-weight:700;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .proj-code{font-family:var(--mono);font-size:18px;color:var(--text);white-space:nowrap;flex-shrink:0}
 .proj-name-in{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text2);font-size:17px;font-family:var(--sans)}
-.proj-use{font-size:15px;color:var(--text3);white-space:nowrap;flex-shrink:0}
+.proj-use{font-size:15px;color:var(--text3);white-space:nowrap;flex-shrink:0;margin-left:auto}
+.proj-item-bot{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0;margin-top:2px}
+.proj-yen{font-size:16px;color:var(--text3);flex-shrink:0}
+.proj-profit-in{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;outline:none;color:var(--text2);font-size:17px;font-family:var(--mono);text-align:right}
+.proj-profit-in:focus{border-color:var(--accent)}
+.proj-rate{flex:1 0 100%;font-size:15px;color:var(--text3);min-width:0}
+.proj-rate b{color:var(--amber);font-weight:400;font-family:var(--mono)}
+.proj-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
 
 /* REPORT */
 .rep-presets{display:flex;gap:8px;margin-bottom:14px}
@@ -224,6 +233,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-sum-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--border)}
 .proj-sum-row:first-child{border-top:none}
 .proj-sum-info{flex:1;min-width:0}
+.proj-sum-head{display:flex;align-items:center;gap:7px;min-width:0}
 .proj-sum-code{font-family:var(--mono);font-size:19px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .proj-sum-code.none{font-family:var(--sans);color:var(--text2)}
 .proj-sum-name{font-size:17px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -389,7 +399,6 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
   <div id="tab-manage" style="display:none">
     <div class="subtab-bar">
       <button class="subtab active" onclick="switchSubTab('projects',this)">案件管理</button>
-      <button class="subtab" onclick="switchSubTab('report',this)">集計</button>
       <button class="subtab" onclick="switchSubTab('export',this)">データ出力</button>
     </div>
 
@@ -413,11 +422,8 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
           <button class="btn btn-ghost" onclick="addProject()" style="flex-shrink:0;white-space:nowrap">追加</button>
         </div>
       </div>
-    </div>
 
-    <!-- 集計 -->
-    <div id="sub-report" style="display:none">
-      <div class="sec">案件別 実働時間</div>
+      <div class="sec" style="margin-top:22px">案件別 実働時間</div>
       <div class="export-card">
         <div class="rep-presets">
           <button class="rep-preset" onclick="setRepPreset('thisMonth')">今月</button>
@@ -492,6 +498,16 @@ const DEPTS=[
   {code:'H',label:'設計'},
   {code:'L',label:'くらしの道具'},
 ];
+/* 部門色。fg は背景に対して読める側の文字色 */
+const DEPT_COLORS={
+  G:{bg:'#381b32',fg:'#ffffff'},
+  H:{bg:'#f8b500',fg:'#1a1a1a'},
+  L:{bg:'#b7282e',fg:'#ffffff'},
+  C:{bg:'#274a78',fg:'#ffffff'},
+};
+const DEPT_FALLBACK={bg:'#4a4a55',fg:'#ffffff'};
+function deptOf(code){return (code||'').split('_')[0];}
+function deptColor(code){return DEPT_COLORS[deptOf(code)]||DEPT_FALLBACK;}
 
 let cats=[];
 let editCats=[];
@@ -671,7 +687,10 @@ function projSumCard(projMins){
     const row=document.createElement('div');row.className='proj-sum-row';
     row.innerHTML=`
       <div class="proj-sum-info">
-        <div class="proj-sum-code${code?'':' none'}">${code?esc(code):'案件未設定'}</div>
+        <div class="proj-sum-head">
+          ${code?`<span class="proj-dot" style="background:${deptColor(code).bg}"></span>`:''}
+          <div class="proj-sum-code${code?'':' none'}">${code?esc(code):'案件未設定'}</div>
+        </div>
         ${p&&p.name?`<div class="proj-sum-name">${esc(p.name)}</div>`:''}
       </div>
       <div class="proj-sum-val">${minsToHMS(mins)}</div>`;
@@ -1017,13 +1036,28 @@ function initProjManage(){
   updateProjPreview();
   renderProjManage();
 }
-/* この案件番号を使っているタスク数 */
+/* この案件番号を使っているタスク数と、全期間の実働分（休憩は除く） */
 function projUsage(code){
-  let n=0;
+  let n=0,mins=0;
   Object.values(getStorage()).forEach(day=>{
-    (day.tasks||[]).forEach(t=>{if(t.project===code)n++;});
+    (day.tasks||[]).forEach(t=>{
+      if(t.project!==code)return;
+      n++;
+      if(isBreak(t)||!t.start||!t.end)return;
+      const v=timeToMin(t.end)-timeToMin(t.start);
+      if(v>0)mins+=v;
+    });
   });
-  return n;
+  return {count:n,mins};
+}
+function parseYen(v){const n=parseInt(String(v).replace(/[^\d-]/g,''),10);return isFinite(n)&&n>0?n:0;}
+function fmtYen(n){return n?n.toLocaleString('ja-JP'):'';}
+/* 見込み利益 ÷ 全期間の実働時間。実働 0 なら null */
+function hourlyRate(profit,mins){return profit&&mins>0?Math.round(profit/(mins/60)):null;}
+function rateText(profit,mins){
+  if(!profit)return '見込み利益を入れると時給を概算します';
+  if(mins<=0)return '実働の記録がまだありません';
+  return `累計 ${minsToHMS(mins)} ・ 概算 <b>¥${hourlyRate(profit,mins).toLocaleString('ja-JP')}/h</b>`;
 }
 function renderProjManage(){
   const list=document.getElementById('projManageList');if(!list)return;
@@ -1033,15 +1067,38 @@ function renderProjManage(){
     list.appendChild(em);return;
   }
   projects.forEach((p,i)=>{
-    const used=projUsage(p.code);
+    const{count,mins}=projUsage(p.code);
+    const col=deptColor(p.code);
+    const profit=p.profit||0;
     const item=document.createElement('div');item.className='proj-item';
+    item.style.borderLeftColor=col.bg;
     item.innerHTML=`
-      <span class="proj-code">${esc(p.code)}</span>
+      <div class="proj-item-top">
+        <span class="dept-badge" style="background:${col.bg};color:${col.fg}">${esc(deptOf(p.code))}</span>
+        <span class="proj-code">${esc(p.code)}</span>
+        ${count?`<span class="proj-use">${count}件</span>`:''}
+        <button class="del-cat-btn" onclick="removeProject(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
       <input type="text" class="proj-name-in" value="${esc(p.name||'')}" maxlength="30" placeholder="案件名（任意）" oninput="updateProjName(${i},this.value)">
-      ${used?`<span class="proj-use">${used}件</span>`:''}
-      <button class="del-cat-btn" onclick="removeProject(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+      <div class="proj-item-bot">
+        <span class="proj-yen">見込み利益 ¥</span>
+        <input type="text" class="proj-profit-in" inputmode="numeric" maxlength="13" value="${fmtYen(profit)}" placeholder="0" oninput="updateProjProfit(${i},this)">
+        <span class="proj-rate" id="projRate${i}">${rateText(profit,mins)}</span>
+      </div>`;
     list.appendChild(item);
   });
+}
+function updateProjProfit(i,el){
+  if(!projects[i])return;
+  const n=parseYen(el.value);
+  const caretAtEnd=el.selectionStart===el.value.length;
+  el.value=fmtYen(n);
+  if(caretAtEnd)el.setSelectionRange(el.value.length,el.value.length);
+  if(n)projects[i].profit=n;else delete projects[i].profit;
+  saveProjects();
+  const rate=document.getElementById('projRate'+i);
+  if(rate)rate.innerHTML=rateText(n,projUsage(projects[i].code).mins);
+  renderReport();
 }
 function updateProjName(i,v){
   if(!projects[i])return;
@@ -1066,7 +1123,7 @@ function addProject(){
 }
 function removeProject(i){
   const p=projects[i];if(!p)return;
-  const used=projUsage(p.code);
+  const used=projUsage(p.code).count;
   const msg=used
     ? `${p.code} を削除しますか？\n${used}件のタスクで使用中です（タスクの記録自体は残ります）。`
     : `${p.code} を削除しますか？`;
@@ -1121,11 +1178,10 @@ function switchTab(name,btn){
   if(name==='manage'){initProjManage();initReport();renderExport();}
 }
 function switchSubTab(name,btn){
-  ['projects','report','export'].forEach(n=>document.getElementById('sub-'+n).style.display=n===name?'block':'none');
+  ['projects','export'].forEach(n=>document.getElementById('sub-'+n).style.display=n===name?'block':'none');
   document.querySelectorAll('.subtab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  if(name==='projects')renderProjManage();
-  if(name==='report')renderReport();
+  if(name==='projects'){renderProjManage();renderReport();}
   if(name==='export')renderExport();
 }
 
@@ -1217,7 +1273,8 @@ function exportJSON(all){
     period={closingDay:CLOSING_DAY,from:r.from,to:r.to};
     suffix=`${r.from.replace(/-/g,'')}-${r.to.replace(/-/g,'')}`;
   }
-  const payload={employee:name,exportedAt:new Date().toISOString(),period,projects,records};
+  const projOut=all?projects:projects.map(({profit,...rest})=>rest);
+  const payload={employee:name,exportedAt:new Date().toISOString(),period,projects:projOut,records};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download=`timecard_${name}_${suffix}.json`;
@@ -1239,7 +1296,12 @@ function handleImport(e){
         loadProjects();
         const byCode=new Map(projects.map(p=>[p.code,p]));
         json.projects.forEach(p=>{
-          if(p&&typeof p.code==='string')byCode.set(p.code,{code:p.code,name:typeof p.name==='string'?p.name:''});
+          if(!p||typeof p.code!=='string')return;
+          const prev=byCode.get(p.code);
+          const o={code:p.code,name:(typeof p.name==='string'&&p.name)||(prev&&prev.name)||''};
+          const profit=parseYen(p.profit)||(prev&&prev.profit)||0;
+          if(profit)o.profit=profit;
+          byCode.set(p.code,o);
         });
         projects=[...byCode.values()].sort(sortProjects);saveProjects();
       }
