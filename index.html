@@ -167,8 +167,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .add-task-btn:hover{border-color:var(--accent);color:var(--accent)}
 .tl-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .tl-btns .add-task-btn{margin-top:0;width:100%}
-.brk-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:8px;padding:9px 12px;font-size:22px;color:var(--text);cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap}
-.brk-btn:hover{border-color:var(--break);color:var(--break);background:var(--surface2)}
+.brk-toggle{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:9px 11px;border:1px solid var(--border);border-radius:9px;background:var(--surface2);font-size:20px;color:var(--text2);cursor:pointer;-webkit-user-select:none;user-select:none}
+.brk-toggle.on{border-color:var(--accent);color:var(--text)}
+.brk-toggle input{width:20px;height:20px;accent-color:var(--accent);flex-shrink:0;margin:0;cursor:pointer}
 
 /* DAILY SUMMARY */
 .daily-summary{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-top:14px}
@@ -334,6 +335,10 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
     <div style="margin-bottom:12px">
       <input class="t-input" type="text" id="mName" placeholder="タスク内容" maxlength="40">
     </div>
+    <label class="brk-toggle" id="mBreakRow">
+      <input type="checkbox" id="mBreak" onchange="onBreakToggle(this.checked)">
+      <img class="brk-inline" src="break-icon.png" alt="" onerror="this.replaceWith('☕ ')">休憩として記録
+    </label>
     <span class="input-label" id="mCatLabel" style="display:block;margin-bottom:6px">タスク種別</span>
     <div class="cat-row" id="modalCatRow"></div>
     <div class="modal-footer">
@@ -778,9 +783,11 @@ function openTaskModal(idx,presetStart){
   const{day}=getDayData(getSchISO());
   editingTaskIdx=idx;modalSelectedCat='';
   editingIsBreak=idx>=0&&isBreak(day.tasks[idx]);
-  document.getElementById('modalCatRow').style.display=editingIsBreak?'none':'flex';
-  document.getElementById('mCatLabel').style.display=editingIsBreak?'none':'block';
-  document.getElementById('mProjectRow').style.display=editingIsBreak?'none':'block';
+  /* 休憩への切り替えは新規追加のときだけ。既存タスクの種別変更は用途がない */
+  document.getElementById('mBreakRow').style.display=idx>=0?'none':'flex';
+  document.getElementById('mBreak').checked=false;
+  document.getElementById('mBreakRow').classList.remove('on');
+  applyBreakMode(editingIsBreak);
   if(idx>=0){
     const t=day.tasks[idx];
     document.getElementById('taskModalTitle').textContent=editingIsBreak?'休憩を編集':'タスクを編集';
@@ -806,6 +813,24 @@ function openTaskModal(idx,presetStart){
   document.getElementById('taskModal').classList.add('open');
   setTimeout(()=>document.getElementById('mName').focus(),100);
 }
+function applyBreakMode(on){
+  editingIsBreak=on;
+  document.getElementById('modalCatRow').style.display=on?'none':'flex';
+  document.getElementById('mCatLabel').style.display=on?'none':'block';
+  document.getElementById('mProjectRow').style.display=on?'none':'block';
+}
+function onBreakToggle(on){
+  applyBreakMode(on);
+  document.getElementById('mBreakRow').classList.toggle('on',on);
+  const nameEl=document.getElementById('mName');
+  if(on){
+    if(!nameEl.value||cats.some(c=>c.label===nameEl.value))nameEl.value=BREAK_LABEL;
+    /* 既定は 30 分。必要なら保存前に直せる */
+    const s=document.getElementById('mStart').value;
+    if(s)document.getElementById('mEnd').value=fmtMin(Math.min(timeToMin(s)+BREAK_MIN,24*60-1));
+  }else if(nameEl.value===BREAK_LABEL)nameEl.value='';
+  document.getElementById('taskModalTitle').textContent=on?'休憩を追加':'タスクを追加';
+}
 function saveTask(){
   const s=document.getElementById('mStart').value;
   const e=document.getElementById('mEnd').value;
@@ -829,23 +854,6 @@ function saveTask(){
 document.getElementById('taskModal').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)saveTask();});
 
 /* 30分の休憩スタンプ。AMは10:00・PMは12:00を起点に、空いている直近の30分枠へ入れる */
-/* 12:00 から後ろへ、埋まっていれば前へ空き 30 分を探す */
-function addBreak(){
-  const iso=getSchISO();const{data,day}=getDayData(iso);
-  const tasks=day.tasks||[];
-  const lo=0,hi=24*60;
-  const anchor=Math.round(12*60/BREAK_MIN)*BREAK_MIN;
-  const free=m=>!findOverlap(tasks,m,m+BREAK_MIN,-1);
-  let slot=null;
-  for(let m=anchor;m+BREAK_MIN<=hi;m+=BREAK_MIN){if(free(m)){slot=m;break;}}
-  if(slot===null)for(let m=anchor-BREAK_MIN;m>=lo;m-=BREAK_MIN){if(free(m)){slot=m;break;}}
-  if(slot===null){showToast('この時間帯に空きがありません');return;}
-  const start=fmtMin(slot),end=fmtMin(slot+BREAK_MIN);
-  day.tasks.push({start,end,name:BREAK_LABEL,category:BREAK_LABEL,break:true});
-  data[iso]=day;saveStorage(data);
-  renderTimeline(iso,day);renderDailySummary(day);
-  showToast(`休憩 ${start}–${end} を追加しました`);
-}
 
 function delTask(i){
   const iso=getSchISO();const{data,day}=getDayData(iso);
@@ -1028,12 +1036,7 @@ function renderTimeline(iso,day){
 
   const btns=document.createElement('div');btns.className='tl-btns';
   const addBtn=document.createElement('button');addBtn.className='add-task-btn';addBtn.textContent='＋ タスクを追加';addBtn.onclick=()=>openTaskModal(-1,'');
-  const brkBtn=document.createElement('button');brkBtn.className='brk-btn';brkBtn.title='30分の休憩を追加';
-  const brkIcon=document.createElement('img');brkIcon.className='brk-inline';brkIcon.src=BREAK_ICON;brkIcon.alt='';
-  brkIcon.addEventListener('error',()=>brkIcon.replaceWith('☕ '));
-  brkBtn.append(brkIcon,'休憩 30分');
-  brkBtn.onclick=()=>addBreak();
-  btns.appendChild(addBtn);btns.appendChild(brkBtn);el.appendChild(btns);
+  btns.appendChild(addBtn);el.appendChild(btns);
 }
 
 /* SETTINGS */
