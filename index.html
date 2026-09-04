@@ -241,9 +241,12 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .add-proj-form.open{display:block}
 
 /* REPORT */
-.date-in{font-family:var(--mono);font-size:17px;min-height:44px;padding-left:8px;padding-right:6px}
+.date-row{display:flex;flex-wrap:wrap;gap:10px}
+.date-row .input-group{flex:1 1 138px}
+.date-in{-webkit-appearance:none;appearance:none;width:100%;min-width:0;font-family:var(--mono);font-size:16px;text-align:left;min-height:44px;padding-left:8px;padding-right:6px}
+.date-in::-webkit-date-and-time-value{text-align:left}
 .date-in::-webkit-calendar-picker-indicator{margin-left:0;padding:0;opacity:.55}
-@media (max-width:360px){.date-in{font-size:15px}}
+@media (max-width:400px){.date-in{font-size:15px;padding-left:6px;padding-right:4px}}
 .rep-note{font-size:17px;color:var(--text3);text-align:center;padding:10px 0}
 
 /* PROJECT SUMMARY */
@@ -452,7 +455,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 
       <div class="sec" style="margin-top:22px">案件別 実働時間</div>
       <div class="export-card">
-        <div class="add-proj-row" style="margin-top:0">
+        <div class="date-row">
           <div class="input-group"><span class="input-label">開始日</span><input class="t-input date-in" type="date" id="repFrom" onchange="renderReport()"></div>
           <div class="input-group"><span class="input-label">終了日</span><input class="t-input date-in" type="date" id="repTo" onchange="renderReport()"></div>
         </div>
