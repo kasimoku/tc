@@ -132,6 +132,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 /* TIMELINE */
 .tl-half{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 12px;margin-bottom:12px}
 .tl-period{font-size:20px;font-family:var(--mono);color:var(--text);letter-spacing:.08em;margin-bottom:10px}
+.tl-period.pm{margin-top:16px}
 .tl-axis{position:relative;height:16px;margin-bottom:4px}
 .tl-tick{position:absolute;font-size:14px;color:var(--text);font-family:var(--mono)}
 .tl-track{position:relative;height:42px;background:var(--surface2);border-radius:8px;margin-bottom:10px;cursor:crosshair;overflow:hidden}
@@ -164,7 +165,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .task-act-btn svg{width:18px;height:18px}
 .add-task-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:8px;padding:9px;font-size:22px;color:var(--text);cursor:pointer;font-family:var(--sans);transition:all .15s;margin-top:10px}
 .add-task-btn:hover{border-color:var(--accent);color:var(--accent)}
-.tl-btns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.tl-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .tl-btns .add-task-btn{margin-top:0;width:100%}
 .brk-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:8px;padding:9px 12px;font-size:22px;color:var(--text);cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap}
 .brk-btn:hover{border-color:var(--break);color:var(--break);background:var(--surface2)}
@@ -828,11 +829,12 @@ function saveTask(){
 document.getElementById('taskModal').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)saveTask();});
 
 /* 30分の休憩スタンプ。AMは10:00・PMは12:00を起点に、空いている直近の30分枠へ入れる */
-function addBreak(startH,endH){
+/* 12:00 から後ろへ、埋まっていれば前へ空き 30 分を探す */
+function addBreak(){
   const iso=getSchISO();const{data,day}=getDayData(iso);
   const tasks=day.tasks||[];
-  const lo=startH*60,hi=endH*60;
-  const anchor=Math.round((startH===0?10*60:12*60)/BREAK_MIN)*BREAK_MIN;
+  const lo=0,hi=24*60;
+  const anchor=Math.round(12*60/BREAK_MIN)*BREAK_MIN;
   const free=m=>!findOverlap(tasks,m,m+BREAK_MIN,-1);
   let slot=null;
   for(let m=anchor;m+BREAK_MIN<=hi;m+=BREAK_MIN){if(free(m)){slot=m;break;}}
@@ -909,11 +911,11 @@ function insertBreakIntoTask(idx,bs,be){
 function renderTimeline(iso,day){
   hideBrkPop();
   const el=document.getElementById('tlContent');el.innerHTML='';
+  const wrap=document.createElement('div');wrap.className='tl-half';
   [{label:'AM  0:00 – 12:00',startH:0,endH:12},{label:'PM  12:00 – 24:00',startH:12,endH:24}].forEach((half,hi)=>{
     const totalMin=(half.endH-half.startH)*60;
-    const wrap=document.createElement('div');wrap.className='tl-half';
 
-    const period=document.createElement('div');period.className='tl-period';period.textContent=half.label;wrap.appendChild(period);
+    const period=document.createElement('div');period.className='tl-period'+(hi?' pm':'');period.textContent=half.label;wrap.appendChild(period);
 
     const axis=document.createElement('div');axis.className='tl-axis';
     const hours=half.endH-half.startH;
@@ -990,16 +992,18 @@ function renderTimeline(iso,day){
     });
 
     wrap.appendChild(track);
-    const hint=document.createElement('div');hint.className='tl-hint';hint.textContent='タップで追加・長押しで休憩';wrap.appendChild(hint);
+  });
+  const hint=document.createElement('div');hint.className='tl-hint';hint.textContent='タップで追加・長押しで休憩';wrap.appendChild(hint);
+  el.appendChild(wrap);
 
-    const tasksInHalf=day.tasks.map((t,i)=>({...t,i})).filter(t=>{
-      if(!t.start)return hi===0;
-      return timeToMin(t.start)>=half.startH*60&&timeToMin(t.start)<half.endH*60;
-    });
-    if(tasksInHalf.length){
-      const lw=document.createElement('div');lw.style.cssText='margin-top:10px;border-top:1px solid var(--border);padding-top:10px';
+  {
+    /* 一日ぶんをまとめて時刻順に。開始未設定は先頭 */
+    const dayTasks=day.tasks.map((t,i)=>({...t,i}))
+      .sort((a,b)=>(a.start?timeToMin(a.start):-1)-(b.start?timeToMin(b.start):-1));
+    if(dayTasks.length){
+      const lw=document.createElement('div');lw.style.cssText='margin-top:12px';
       const list=document.createElement('div');list.className='task-list';
-      tasksInHalf.forEach(t=>{
+      dayTasks.forEach(t=>{
         const c=catByLabel(t.category);
         const dotColor=isBreak(t)?'var(--break)':c.color;
         const item=document.createElement('div');item.className='task-item';
@@ -1018,19 +1022,18 @@ function renderTimeline(iso,day){
         item.querySelectorAll('.task-act-btn')[1].onclick=()=>delTask(t.i);
         list.appendChild(item);
       });
-      lw.appendChild(list);wrap.appendChild(lw);
+      lw.appendChild(list);el.appendChild(lw);
     }
+  }
 
-    const btns=document.createElement('div');btns.className='tl-btns';
-    const addBtn=document.createElement('button');addBtn.className='add-task-btn';addBtn.textContent='＋ タスクを追加';addBtn.onclick=()=>openTaskModal(-1,'');
-    const brkBtn=document.createElement('button');brkBtn.className='brk-btn';brkBtn.title='30分の休憩を追加';
-    const brkIcon=document.createElement('img');brkIcon.className='brk-inline';brkIcon.src=BREAK_ICON;brkIcon.alt='';
-    brkIcon.addEventListener('error',()=>brkIcon.replaceWith('☕ '));
-    brkBtn.append(brkIcon,'休憩 30分');
-    brkBtn.onclick=()=>addBreak(half.startH,half.endH);
-    btns.appendChild(addBtn);btns.appendChild(brkBtn);wrap.appendChild(btns);
-    el.appendChild(wrap);
-  });
+  const btns=document.createElement('div');btns.className='tl-btns';
+  const addBtn=document.createElement('button');addBtn.className='add-task-btn';addBtn.textContent='＋ タスクを追加';addBtn.onclick=()=>openTaskModal(-1,'');
+  const brkBtn=document.createElement('button');brkBtn.className='brk-btn';brkBtn.title='30分の休憩を追加';
+  const brkIcon=document.createElement('img');brkIcon.className='brk-inline';brkIcon.src=BREAK_ICON;brkIcon.alt='';
+  brkIcon.addEventListener('error',()=>brkIcon.replaceWith('☕ '));
+  brkBtn.append(brkIcon,'休憩 30分');
+  brkBtn.onclick=()=>addBreak();
+  btns.appendChild(addBtn);btns.appendChild(brkBtn);el.appendChild(btns);
 }
 
 /* SETTINGS */
