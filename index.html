@@ -205,18 +205,30 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-preview{font-family:var(--mono);font-size:19px;color:var(--accent);text-align:center;margin-top:10px}
 .add-proj-row2{display:flex;gap:8px;margin-top:8px}
 .add-proj-row2 .t-input{flex:1;min-width:0}
-.proj-item{display:flex;flex-direction:column;gap:6px;background:var(--surface2);border-radius:9px;padding:9px 10px 10px;border:1px solid var(--border);border-left-width:4px;border-left-style:solid;min-width:0}
-.proj-item-top{display:flex;align-items:center;gap:8px;min-width:0}
+.proj-item{background:var(--surface2);border-radius:9px;border:1px solid var(--border);border-left-width:4px;border-left-style:solid;min-width:0;overflow:hidden;transition:border-color .15s}
+.proj-item.open{border-color:var(--border2)}
+.proj-head{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:10px;background:none;border:none;cursor:pointer;font-family:var(--sans);text-align:left}
+.proj-head:hover .proj-chev{color:var(--text2)}
 .dept-badge{font-family:var(--mono);font-size:15px;font-weight:700;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .proj-code{font-family:var(--mono);font-size:18px;color:var(--text);white-space:nowrap;flex-shrink:0}
-.proj-name-in{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text2);font-size:17px;font-family:var(--sans)}
-.proj-use{font-size:15px;color:var(--text3);white-space:nowrap;flex-shrink:0;margin-left:auto}
-.proj-item-bot{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0;margin-top:2px}
-.proj-yen{font-size:16px;color:var(--text3);flex-shrink:0}
-.proj-profit-in{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;outline:none;color:var(--text2);font-size:17px;font-family:var(--mono);text-align:right}
-.proj-profit-in:focus{border-color:var(--accent)}
-.proj-rate{flex:1 0 100%;font-size:15px;color:var(--text3);min-width:0}
-.proj-rate b{color:var(--amber);font-weight:400;font-family:var(--mono)}
+.proj-name-txt{flex:1;min-width:0;font-size:17px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj-chev{width:18px;height:18px;color:var(--text3);flex-shrink:0;transition:transform .18s}
+.proj-item.open .proj-chev{transform:rotate(180deg)}
+.proj-body{padding:2px 10px 12px;display:flex;flex-direction:column;gap:10px}
+.proj-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.proj-flabel{font-size:15px;color:var(--text3)}
+.proj-yen-wrap{display:flex;align-items:center;gap:7px;min-width:0}
+.proj-yen{font-size:18px;color:var(--text3);flex-shrink:0}
+.proj-name-in{font-size:18px}
+.proj-profit-in{font-family:var(--mono);text-align:right;font-size:18px}
+.proj-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 6px}
+.proj-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.proj-stat-label{font-size:clamp(13px,3.4vw,14px);color:var(--text3)}
+.proj-stat-val{font-family:var(--mono);font-size:clamp(15px,4.4vw,19px);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.proj-stat-val.amber{color:var(--amber)}
+.proj-del{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:8px;font-size:17px;border-radius:8px;cursor:pointer;font-family:var(--sans);background:rgba(240,107,107,.08);border:1px solid rgba(240,107,107,.22);color:var(--red);transition:background .15s}
+.proj-del:hover{background:rgba(240,107,107,.16)}
+.proj-del svg{width:17px;height:17px}
 .proj-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
 
 /* REPORT */
@@ -512,6 +524,7 @@ function deptColor(code){return DEPT_COLORS[deptOf(code)]||DEPT_FALLBACK;}
 let cats=[];
 let editCats=[];
 let projects=[];
+let openProjCode=null;
 let editingTaskIdx=-1;
 let editingIsBreak=false;
 let modalSelectedCat='';
@@ -1054,10 +1067,9 @@ function parseYen(v){const n=parseInt(String(v).replace(/[^\d-]/g,''),10);return
 function fmtYen(n){return n?n.toLocaleString('ja-JP'):'';}
 /* 見込み利益 ÷ 全期間の実働時間。実働 0 なら null */
 function hourlyRate(profit,mins){return profit&&mins>0?Math.round(profit/(mins/60)):null;}
-function rateText(profit,mins){
-  if(!profit)return '見込み利益を入れると時給を概算します';
-  if(mins<=0)return '実働の記録がまだありません';
-  return `累計 ${minsToHMS(mins)} ・ 概算 <b>¥${hourlyRate(profit,mins).toLocaleString('ja-JP')}/h</b>`;
+function rateVal(profit,mins){
+  const r=hourlyRate(profit,mins);
+  return r===null?'—':`¥${r.toLocaleString('ja-JP')}`;
 }
 function renderProjManage(){
   const list=document.getElementById('projManageList');if(!list)return;
@@ -1070,23 +1082,44 @@ function renderProjManage(){
     const{count,mins}=projUsage(p.code);
     const col=deptColor(p.code);
     const profit=p.profit||0;
-    const item=document.createElement('div');item.className='proj-item';
+    const open=p.code===openProjCode;
+    const item=document.createElement('div');item.className='proj-item'+(open?' open':'');
     item.style.borderLeftColor=col.bg;
     item.innerHTML=`
-      <div class="proj-item-top">
+      <button class="proj-head" onclick="toggleProject('${esc(p.code)}')" aria-expanded="${open}">
         <span class="dept-badge" style="background:${col.bg};color:${col.fg}">${esc(deptOf(p.code))}</span>
         <span class="proj-code">${esc(p.code)}</span>
-        ${count?`<span class="proj-use">${count}件</span>`:''}
-        <button class="del-cat-btn" onclick="removeProject(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      </div>
-      <input type="text" class="proj-name-in" value="${esc(p.name||'')}" maxlength="30" placeholder="案件名（任意）" oninput="updateProjName(${i},this.value)">
-      <div class="proj-item-bot">
-        <span class="proj-yen">見込み利益 ¥</span>
-        <input type="text" class="proj-profit-in" inputmode="numeric" maxlength="13" value="${fmtYen(profit)}" placeholder="0" oninput="updateProjProfit(${i},this)">
-        <span class="proj-rate" id="projRate${i}">${rateText(profit,mins)}</span>
-      </div>`;
+        <span class="proj-name-txt">${esc(p.name||'')}</span>
+        <svg class="proj-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      ${!open?'':`<div class="proj-body">
+        <div class="proj-field">
+          <span class="proj-flabel">案件名</span>
+          <input type="text" class="t-input proj-name-in" value="${esc(p.name||'')}" maxlength="30" placeholder="案件名（任意）" oninput="updateProjName(${i},this.value)">
+        </div>
+        <div class="proj-field">
+          <span class="proj-flabel">見込み利益</span>
+          <div class="proj-yen-wrap">
+            <span class="proj-yen">¥</span>
+            <input type="text" class="t-input proj-profit-in" inputmode="numeric" maxlength="13" value="${fmtYen(profit)}" placeholder="0" oninput="updateProjProfit(${i},this)">
+          </div>
+        </div>
+        <div class="proj-stats">
+          <div class="proj-stat"><span class="proj-stat-label">累計実働</span><span class="proj-stat-val">${mins>0?minsToHMS(mins):'—'}</span></div>
+          <div class="proj-stat"><span class="proj-stat-label">概算時給</span><span class="proj-stat-val amber" id="projRate${i}">${rateVal(profit,mins)}</span></div>
+          <div class="proj-stat"><span class="proj-stat-label">タスク</span><span class="proj-stat-val">${count}件</span></div>
+        </div>
+        <button class="proj-del" onclick="removeProject(${i})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          この案件を削除
+        </button>
+      </div>`}`;
     list.appendChild(item);
   });
+}
+function toggleProject(code){
+  openProjCode=openProjCode===code?null:code;
+  renderProjManage();
 }
 function updateProjProfit(i,el){
   if(!projects[i])return;
@@ -1097,12 +1130,15 @@ function updateProjProfit(i,el){
   if(n)projects[i].profit=n;else delete projects[i].profit;
   saveProjects();
   const rate=document.getElementById('projRate'+i);
-  if(rate)rate.innerHTML=rateText(n,projUsage(projects[i].code).mins);
+  if(rate)rate.textContent=rateVal(n,projUsage(projects[i].code).mins);
   renderReport();
 }
 function updateProjName(i,v){
   if(!projects[i])return;
   projects[i].name=v.trim();saveProjects();
+  const item=document.querySelectorAll('#projManageList .proj-item')[i];
+  const txt=item&&item.querySelector('.proj-name-txt');
+  if(txt)txt.textContent=projects[i].name;
   renderCalendar();
   if(document.getElementById('tab-schedule').style.display!=='none')renderSchedule();
 }
@@ -1116,6 +1152,7 @@ function addProject(){
   if(projects.some(p=>p.code===code)){showToast('その案件番号は登録済みです');return;}
   projects.push({code,name:document.getElementById('newProjName').value.trim()});
   projects.sort(sortProjects);saveProjects();
+  openProjCode=code;
   document.getElementById('newProjNo').value='';
   document.getElementById('newProjName').value='';
   updateProjPreview();renderProjManage();renderCalendar();
@@ -1128,8 +1165,9 @@ function removeProject(i){
     ? `${p.code} を削除しますか？\n${used}件のタスクで使用中です（タスクの記録自体は残ります）。`
     : `${p.code} を削除しますか？`;
   if(!confirm(msg))return;
+  if(p.code===openProjCode)openProjCode=null;
   projects.splice(i,1);saveProjects();
-  renderProjManage();renderCalendar();
+  renderProjManage();renderReport();renderCalendar();
   if(document.getElementById('tab-schedule').style.display!=='none')renderSchedule();
   showToast('削除しました');
 }
