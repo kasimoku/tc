@@ -90,6 +90,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .time-inp:valid{color:var(--text)}
 
 .main{max-width:640px;margin:0 auto;padding:20px 12px 0}
+.storage-warn{max-width:640px;margin:14px auto 0;padding:11px 14px;background:var(--red-soft);border:1px solid var(--red-line);border-radius:10px;color:var(--red);font-size:18px;line-height:1.6}
 
 .tab-bar{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:18px}
 .tab{flex:1;text-align:center;padding:9px 2px;font-size:20px;color:var(--text2);border-radius:8px;cursor:pointer;border:none;background:none;font-family:var(--sans);transition:all .15s}
@@ -388,6 +389,10 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
+<div class="storage-warn" id="storageWarn" hidden>
+  この端末では記録を保存できません。プライベートブラウズを解除するか、ホーム画面に追加したアイコンから開いてください。
+</div>
+
 <div class="main">
   <div class="tab-bar">
     <button class="tab active" onclick="switchTab('calendar',this)">カレンダー</button>
@@ -569,17 +574,56 @@ let calYear=new Date().getFullYear();
 let calMonth=new Date().getMonth();
 let schDate=new Date();schDate.setHours(0,0,0,0);
 
-function loadCats(){cats=JSON.parse(localStorage.getItem('tc_cats')||'null')||DEFAULT_CATS;}
-function saveCats(){localStorage.setItem('tc_cats',JSON.stringify(cats));}
-function loadProjects(){try{projects=JSON.parse(localStorage.getItem('tc_projects')||'null')||[];}catch(e){projects=[];}}
-function saveProjects(){localStorage.setItem('tc_projects',JSON.stringify(projects));}
+/* localStorage はプライベートブラウズ・容量超過・サイトデータのブロックで
+   読み書きとも例外を投げる。素通しにすると init() ごと落ちて画面が白紙になり、
+   「記録できない」という症状になるので、アクセスは必ずここを通す。 */
+let storageOK=true;
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){markStorageBroken();return null;}}
+function lsSet(k,v){
+  try{localStorage.setItem(k,v);return true;}
+  catch(e){markStorageBroken();return false;}
+}
+function lsDel(k){try{localStorage.removeItem(k);}catch(e){markStorageBroken();}}
+function markStorageBroken(){
+  storageOK=false;
+  const w=document.getElementById('storageWarn');
+  if(w)w.hidden=false;
+}
+/* 書き込みが通らない端末では保存したつもりで消えるのが一番困るので、
+   起動時に往復させて確かめる。 */
+function checkStorage(){
+  try{
+    localStorage.setItem('tc_probe','1');
+    const ok=localStorage.getItem('tc_probe')==='1';
+    localStorage.removeItem('tc_probe');
+    if(!ok)throw new Error('readback failed');
+  }catch(e){markStorageBroken();}
+}
+
+function loadCats(){
+  try{const c=JSON.parse(lsGet('tc_cats')||'null');cats=Array.isArray(c)&&c.length?c:DEFAULT_CATS;}
+  catch(e){cats=DEFAULT_CATS;}
+}
+function saveCats(){if(!lsSet('tc_cats',JSON.stringify(cats)))showToast('保存できませんでした');}
+function loadProjects(){try{const p=JSON.parse(lsGet('tc_projects')||'null');projects=Array.isArray(p)?p:[];}catch(e){projects=[];}}
+function saveProjects(){if(!lsSet('tc_projects',JSON.stringify(projects)))showToast('保存できませんでした');}
 function projByCode(c){return projects.find(p=>p.code===c)||null;}
 function projLabel(c){const p=projByCode(c);return p&&p.name?`${c}｜${p.name}`:c;}
 function sortProjects(a,b){return a.code<b.code?-1:a.code>b.code?1:0;}
 /* 案件番号の年月部分。C_02609_001 = 2026年9月 の並びに合わせて 0+YY+MM */
 function defaultYm(){const d=new Date();return '0'+String(d.getFullYear()%100).padStart(2,'0')+String(d.getMonth()+1).padStart(2,'0');}
-function getStorage(){try{return JSON.parse(localStorage.getItem('tc_data')||'{}')}catch(e){return {};}}
-function saveStorage(d){localStorage.setItem('tc_data',JSON.stringify(d));}
+function getStorage(){
+  const raw=lsGet('tc_data');
+  if(!raw)return {};
+  try{const d=JSON.parse(raw);return (d&&typeof d==='object')?d:{};}
+  catch(e){
+    /* 壊れた値のまま上書きすると復旧の芽が消えるので、退避してから空で始める */
+    lsSet('tc_broken_'+Date.now(),raw);
+    showToast('記録を読めませんでした。壊れたデータは退避しました');
+    return {};
+  }
+}
+function saveStorage(d){return lsSet('tc_data',JSON.stringify(d));}
 function fmtDate(d){return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;}
 function toISO(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function getSchISO(){return toISO(schDate);}
@@ -607,7 +651,7 @@ function toggleTheme(){
 }
 try{
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{
-    if(!localStorage.getItem('tc_theme'))applyTheme(e.matches?'dark':'light');
+    if(!lsGet('tc_theme'))applyTheme(e.matches?'dark':'light');
   });
 }catch(e){}
 
@@ -634,17 +678,18 @@ function fmtMin(m){return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(
 
 /* USER */
 function openNameModal(){
-  document.getElementById('nameInput').value=localStorage.getItem('tc_name')||'';
+  document.getElementById('nameInput').value=lsGet('tc_name')||'';
   document.getElementById('nameModal').classList.add('open');
   setTimeout(()=>document.getElementById('nameInput').focus(),100);
 }
 function saveName(){
   const n=document.getElementById('nameInput').value.trim();
   if(!n){showToast('名前を入力してください');return;}
-  localStorage.setItem('tc_name',n);closeModal('nameModal');updateUserChip();showToast('名前を保存しました');
+  if(!lsSet('tc_name',n)){showToast('保存できませんでした。下の警告をご確認ください');return;}
+  closeModal('nameModal');updateUserChip();showToast('名前を保存しました');
 }
 function updateUserChip(){
-  const n=localStorage.getItem('tc_name')||'';
+  const n=lsGet('tc_name')||'';
   document.getElementById('userName').textContent=n||'名前を設定';
   document.getElementById('userAvatar').textContent=n?n[0]:'?';
 }
@@ -898,7 +943,9 @@ function saveTask(){
   else{const pc=document.getElementById('mProject').value;if(pc)task.project=pc;}
   if(editingTaskIdx>=0)day.tasks[editingTaskIdx]=task;
   else day.tasks.push(task);
-  data[iso]=day;saveStorage(data);closeModal('taskModal');
+  data[iso]=day;
+  if(!saveStorage(data)){showToast('保存できませんでした。下の警告をご確認ください');return;}
+  closeModal('taskModal');
   const{day:freshDay}=getDayData(iso);
   renderTimeline(iso,freshDay);renderDailySummary(freshDay);
   showToast(editingTaskIdx>=0?'タスクを更新しました':'タスクを追加しました');
@@ -1357,7 +1404,7 @@ function renderExport(){
   wrap.appendChild(metricsRow(days,mins));
 }
 function exportJSON(all){
-  const name=localStorage.getItem('tc_name')||'未設定';
+  const name=lsGet('tc_name')||'未設定';
   let records,period=null,suffix;
   if(all){
     records=getStorage();suffix='all';
@@ -1386,7 +1433,7 @@ function handleImport(e){
       if(typeof records!=='object'||Array.isArray(records))throw new Error();
       if(!confirm('現在のデータにインポートデータを統合します。よろしいですか？'))return;
       saveStorage({...getStorage(),...records});
-      if(json.employee)localStorage.setItem('tc_name',json.employee);
+      if(json.employee)lsSet('tc_name',json.employee);
       if(Array.isArray(json.projects)){
         loadProjects();
         const byCode=new Map(projects.map(p=>[p.code,p]));
@@ -1407,18 +1454,21 @@ function handleImport(e){
 }
 function clearAll(){
   if(!confirm('すべての記録を削除しますか？この操作は取り消せません。'))return;
-  localStorage.removeItem('tc_data');renderCalendar();renderProjManage();renderReport();renderExport();showToast('データを削除しました');
+  lsDel('tc_data');renderCalendar();renderProjManage();renderReport();renderExport();showToast('データを削除しました');
 }
 
 /* INIT */
 function init(){
   applyTheme(currentTheme());
+  checkStorage();
+  /* 対応ブラウザでは永続扱いを要求して、容量逼迫時の自動削除を避ける */
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});}catch(e){}
   loadCats();loadProjects();
-  try{if(localStorage.getItem('tc_calbasis')==='closing')calBasis='closing';}catch(e){}
+  if(lsGet('tc_calbasis')==='closing')calBasis='closing';
   updateUserChip();renderCalendar();
-  if(!localStorage.getItem('tc_name'))openNameModal();
+  if(!lsGet('tc_name'))openNameModal();
 }
-init();
+try{init();}catch(e){console.error(e);markStorageBroken();}
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
