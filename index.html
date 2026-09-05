@@ -481,12 +481,12 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
         <button class="sch-date-btn" onclick="changeExpPeriod(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
         <div class="exp-period">
           <div class="exp-period-range" id="expRange">—</div>
-          <div class="exp-period-note">15日締め</div>
+          <div class="exp-period-note" id="expNote"></div>
         </div>
         <button class="sch-date-btn" onclick="changeExpPeriod(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
       <div id="expTotals"></div>
-      <div class="export-desc">締め日（15日）を過ぎたら対象期間を選び、JSONを出力して人事担当者に提出してください。過去のJSONからデータを復元することもできます。</div>
+      <div class="export-desc" id="expDesc">締め日を過ぎたら対象期間を選び、JSONを出力して人事担当者に提出してください。過去のJSONからデータを復元することもできます。</div>
       <div class="export-btns">
         <button class="exp-btn exp-json" onclick="exportJSON()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -548,12 +548,12 @@ let cats=[];
 let editCats=[];
 let projects=[];
 let openProjCode=null;
-/* カレンダー下の集計を「1ヶ月」で見るか「16日〜翌15日」で見るか */
+/* カレンダー下の集計を「1ヶ月」で見るか「11日〜翌10日」で見るか */
 let calBasis='month';
 let editingTaskIdx=-1;
 let editingIsBreak=false;
 let modalSelectedCat='';
-const CLOSING_DAY=15;
+const CLOSING_DAY=10;
 let expOffset=0;
 let calYear=new Date().getFullYear();
 let calMonth=new Date().getMonth();
@@ -699,7 +699,7 @@ function renderCalendar(){
 
   renderCalSummary(workedDays,totalMins);
 }
-/* 表示中の月 M に対し、締め期間は M-1/16 〜 M/15（M 月に締まる分） */
+/* 表示中の月 M に対し、締め期間は M-1/11 〜 M/10（M 月に締まる分） */
 function closingRangeOf(year,month){
   return {start:new Date(year,month-1,CLOSING_DAY+1),end:new Date(year,month,CLOSING_DAY)};
 }
@@ -1316,7 +1316,7 @@ function renderReport(){
 }
 
 /* EXPORT / IMPORT */
-/* 15日締め。offset 0 = 今日を含む期間（16日〜翌15日） */
+/* 10日締め。offset 0 = 今日を含む期間（11日〜翌10日） */
 function periodRange(offset){
   const t=new Date();
   let m=t.getMonth()+(t.getDate()>CLOSING_DAY?1:0)+offset;
@@ -1335,6 +1335,8 @@ function renderExport(){
     ? fmtDate(end).slice(5)
     : fmtDate(end);
   document.getElementById('expRange').textContent=`${fmtDate(start)} – ${endTxt}`;
+  document.getElementById('expNote').textContent=`${CLOSING_DAY}日締め`;
+  document.getElementById('expDesc').textContent=`締め日（${CLOSING_DAY}日）を過ぎたら対象期間を選び、JSONを出力して人事担当者に提出してください。過去のJSONからデータを復元することもできます。`;
   const{from,to}=periodRecords();
   const{days,mins,projMins}=aggregateRange(from,to);
   const wrap=document.getElementById('expTotals');wrap.innerHTML='';
