@@ -58,7 +58,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 
 .top-bar{position:sticky;top:0;z-index:50;background:var(--topbar);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:calc(12px + env(safe-area-inset-top)) 14px 12px;display:flex;align-items:center;gap:8px}
 .brand{display:flex;align-items:center;gap:9px;flex-shrink:0;min-width:0}
-.brand-mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:var(--accent-fg);font-family:var(--sans);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:.02em}
+.brand-mark{width:30px;height:30px;border-radius:8px;display:block;flex-shrink:0}
 .app-name{font-family:var(--sans);font-size:19px;font-weight:700;color:var(--text);letter-spacing:.04em;flex-shrink:0}
 .top-actions{margin-left:auto;display:flex;align-items:center;gap:6px;min-width:0}
 .user-chip{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 12px 5px 7px;cursor:pointer;font-size:20px;color:var(--text2);transition:border-color .2s;min-width:0}
@@ -312,7 +312,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 <body>
 
 <div class="top-bar">
-  <div class="brand"><span class="brand-mark">TC</span><span class="app-name">TIMECARD</span></div>
+  <div class="brand"><img class="brand-mark" src="tc-favicon.png" alt="" width="30" height="30"><span class="app-name">TIMECARD</span></div>
   <div class="top-actions">
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="テーマ切替"></button>
     <button class="icon-btn" onclick="openSettings()" title="設定">
