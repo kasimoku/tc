@@ -118,11 +118,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .cal-cell.today{border-color:var(--accent)!important;background:var(--accent-soft)}
 .cal-cell.worked{background:var(--worked-bg);border-color:var(--worked-border)}
 .cal-cell.worked:hover{background:var(--worked-bg2)}
+/* 交通費のある日。既存の枠（今日・出勤日）を潰さないよう内側にリングを重ねる */
+.cal-cell.fare{box-shadow:inset 0 0 0 2px var(--blue)}
 .cal-day{font-size:20px;font-family:var(--mono);line-height:1}
 .cal-cell.sun .cal-day{color:var(--red)}
 .cal-cell.sat .cal-day{color:var(--blue)}
 .cal-cell.other-month .cal-day{color:var(--text3)}
 .cal-hours{font-size:14px;font-family:var(--mono);color:var(--green)}
+@media (max-width:390px){.cal-hours{font-size:13px}}
 .cal-summary{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px}
 .cal-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .basis-switch{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:10px}
@@ -137,8 +140,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .cal-metric-value.amber{color:var(--amber)}
 
 /* FARE (交通費) */
-.cal-sub{display:flex;align-items:center;justify-content:center;gap:5px;line-height:1}
-.cal-fare-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0}
+
 .fare-pop{position:fixed;z-index:150;display:none;transform:translate(-50%,-100%);background:var(--surface);color:var(--blue);border:1.5px solid var(--blue);border-radius:99px;padding:6px 15px;font-size:17px;font-weight:500;font-family:var(--sans);white-space:nowrap;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.16);-webkit-user-select:none;user-select:none;transition:background .15s,color .15s}
 .fare-pop.show{display:block}
 .fare-pop:hover{background:var(--blue);color:#fff}
@@ -952,14 +954,11 @@ function renderCalendar(){
     let cls='cal-cell';
     if(iso===today)cls+=' today';
     if(hasWork)cls+=' worked';
+    if(fares.length)cls+=' fare';
     if(dow===0)cls+=' sun';
     if(dow===6)cls+=' sat';
     cell.className=cls;
-    /* 日付は常に中央。勤務時間と交通費マークはその下の行にまとめる */
-    const sub=hasWork||fares.length
-      ? `<span class="cal-sub">${hasWork?`<span class="cal-hours">${minsToHMS(taskMins)}</span>`:''}${fares.length?'<span class="cal-fare-dot"></span>':''}</span>`
-      : '';
-    cell.innerHTML=`<span class="cal-day">${d}</span>${sub}`;
+    cell.innerHTML=`<span class="cal-day">${d}</span>${hasWork?`<span class="cal-hours">${minsToHMS(taskMins)}</span>`:''}`;
     cell.addEventListener('click',()=>{
       /* 長押しで交通費ポップを出した直後は日程タブへ飛ばさない */
       if(fareSuppressClick)return;
