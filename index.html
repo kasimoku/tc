@@ -112,7 +112,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .cal-dow{text-align:center;font-size:17px;color:var(--text3);padding:6px 0;letter-spacing:.06em}
 .cal-dow:first-child{color:var(--red)}
 .cal-dow:last-child{color:var(--blue)}
-.cal-cell{aspect-ratio:1;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;transition:all .15s;position:relative;border:1px solid transparent;gap:3px}
+.cal-cell{aspect-ratio:1;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;transition:all .15s;position:relative;border:1px solid transparent;gap:3px}
 .cal-cell:hover{background:var(--surface2);border-color:var(--border)}
 .cal-cell.empty{pointer-events:none}
 .cal-cell.today{border-color:var(--accent)!important;background:var(--accent-soft)}
@@ -135,6 +135,52 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .cal-metric-value{font-family:var(--mono);font-size:40px;font-weight:500}
 .cal-metric-value.green{color:var(--green)}
 .cal-metric-value.amber{color:var(--amber)}
+
+/* FARE (交通費) */
+.cal-fare-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--blue)}
+.fare-pop{position:fixed;z-index:150;display:none;transform:translate(-50%,-100%);background:var(--blue);color:#fff;border-radius:99px;padding:7px 15px;font-size:17px;font-family:var(--sans);white-space:nowrap;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.4);-webkit-user-select:none;user-select:none;transition:background .15s}
+.fare-pop.show{display:block}
+.fare-pop:hover{background:var(--accent);color:var(--accent-fg)}
+.fare-pop::after{content:'';position:absolute;left:var(--arrow-x,50%);bottom:-4px;width:10px;height:10px;background:inherit;transform:translateX(-50%) rotate(45deg);border-radius:2px}
+.fare-pop svg{width:17px;height:17px;vertical-align:-3px;margin-right:5px}
+.cal-hint{font-size:17px;color:var(--text3);text-align:center;margin:-6px 0 14px}
+.fare-sum{border-top:1px solid var(--border);margin-top:16px;padding-top:14px}
+.fare-sum-head{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);text-align:left;color:var(--text)}
+.fare-sum-head svg.fare-ico{width:19px;height:19px;color:var(--blue);flex-shrink:0}
+.fare-sum-label{font-size:17px;color:var(--text3);letter-spacing:.08em;flex-shrink:0}
+.fare-sum-count{font-size:16px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fare-sum-total{margin-left:auto;font-family:var(--mono);font-size:28px;font-weight:500;color:var(--blue);flex-shrink:0}
+.fare-chev{width:18px;height:18px;color:var(--text3);flex-shrink:0;transition:transform .18s}
+.fare-sum.open .fare-chev{transform:rotate(180deg)}
+.fare-list{display:none;flex-direction:column;gap:7px;margin-top:12px}
+.fare-sum.open .fare-list{display:flex}
+.fare-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 11px;cursor:pointer;text-align:left;font-family:var(--sans);transition:border-color .15s;width:100%}
+.fare-row:hover{border-color:var(--border2)}
+.fare-date{font-family:var(--mono);font-size:17px;color:var(--text2);flex-shrink:0;width:48px}
+.fare-info{flex:1;min-width:0;display:block}
+.fare-dest,.fare-meta{display:block}
+.fare-dest{font-size:20px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fare-meta{font-size:16px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.fare-amount{font-family:var(--mono);font-size:20px;color:var(--text);flex-shrink:0}
+@media (max-width:400px){
+  .fare-date{width:42px;font-size:16px}
+  .fare-amount{font-size:18px}
+  .fare-row,.fare-day-item{gap:8px;padding:9px}
+}
+.fare-empty{font-size:17px;color:var(--text3);text-align:center;padding:12px 0 2px}
+.fare-day-list{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.fare-day-item{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 11px;min-width:0}
+.fare-day-item.editing{border-color:var(--accent)}
+.fare-form-sec{font-size:17px;letter-spacing:.08em;color:var(--text2);margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.fare-form-sec::after{content:'';flex:1;height:1px;background:var(--border)}
+.fare-field{display:flex;flex-direction:column;gap:5px;margin-bottom:11px;min-width:0}
+.fare-yen-wrap{display:flex;align-items:center;gap:7px;min-width:0}
+.fare-yen{font-size:22px;color:var(--text3);flex-shrink:0}
+.fare-amount-in{font-family:var(--mono);text-align:right}
+.trip-switch{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px}
+.trip-btn{flex:1;padding:9px 2px;font-size:19px;color:var(--text3);border:none;border-radius:7px;background:none;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.trip-btn:hover{color:var(--text2)}
+.trip-btn.active{background:var(--accent);color:var(--accent-fg)}
 
 /* SCHEDULE */
 .sch-date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
@@ -367,6 +413,49 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
   </div>
 </div>
 
+<!-- FARE MODAL -->
+<div class="modal-overlay" id="fareModal">
+  <div class="modal">
+    <h3 id="fareModalTitle">交通費</h3>
+    <div class="fare-day-list" id="fareDayList"></div>
+    <div class="fare-form-sec" id="fareFormSec">新しい記録</div>
+    <div class="fare-field">
+      <span class="input-label">訪問先</span>
+      <input class="t-input" type="text" id="fDest" maxlength="30" placeholder="例: 〇〇商事 本社">
+    </div>
+    <div class="fare-field">
+      <span class="input-label">目的</span>
+      <input class="t-input" type="text" id="fPurpose" maxlength="40" placeholder="例: 打ち合わせ">
+    </div>
+    <div class="fare-field">
+      <span class="input-label">交通機関</span>
+      <select class="t-input" id="fTransit"></select>
+    </div>
+    <div class="fare-field">
+      <span class="input-label">区間</span>
+      <input class="t-input" type="text" id="fRoute" maxlength="40" placeholder="例: 郡山 → 東京">
+    </div>
+    <div class="fare-field">
+      <span class="input-label">片道 / 往復</span>
+      <div class="trip-switch">
+        <button class="trip-btn" type="button" id="fTripOne" onclick="setFareTrip(false)">片道</button>
+        <button class="trip-btn" type="button" id="fTripRound" onclick="setFareTrip(true)">往復</button>
+      </div>
+    </div>
+    <div class="fare-field">
+      <span class="input-label">金額（合計）</span>
+      <div class="fare-yen-wrap">
+        <span class="fare-yen">¥</span>
+        <input class="t-input fare-amount-in" type="text" id="fAmount" inputmode="numeric" maxlength="9" placeholder="0" oninput="onFareAmountInput(this)">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeFareModal()">閉じる</button>
+      <button class="btn btn-primary" id="fareSaveBtn" onclick="saveFare()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
@@ -408,6 +497,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
       <button class="cal-nav-btn" onclick="changeMonth(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
     </div>
     <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-hint">日付を長押しで交通費</div>
     <div class="cal-summary">
       <div class="basis-switch">
         <button class="basis-btn" id="basisMonth" onclick="setCalBasis('month')">1ヶ月</button>
@@ -423,6 +513,16 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
           <div class="cal-metric-label">合計勤務時間</div>
           <div class="cal-metric-value amber" id="calHours">—</div>
         </div>
+      </div>
+      <div class="fare-sum" id="fareSum">
+        <button class="fare-sum-head" id="fareSumHead" onclick="toggleFareList()" aria-expanded="false">
+          <svg class="fare-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="14" rx="3"/><line x1="5" y1="11" x2="19" y2="11"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/><path d="M8 21l2-3M16 21l-2-3"/></svg>
+          <span class="fare-sum-label">交通費</span>
+          <span class="fare-sum-count" id="fareCount">記録なし</span>
+          <span class="fare-sum-total" id="fareTotal">¥0</span>
+          <svg class="fare-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="fare-list" id="fareList"></div>
       </div>
     </div>
   </div>
@@ -522,6 +622,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
   </div>
 </div>
 
+<div class="fare-pop" id="farePop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="14" rx="3"/><line x1="5" y1="11" x2="19" y2="11"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/><path d="M8 21l2-3M16 21l-2-3"/></svg><span id="farePopText"></span></div>
 <div class="brk-pop" id="brkPop"><img class="brk-inline" src="break-icon.png" alt=""><span id="brkPopText"></span></div>
 <div class="toast" id="toast"></div>
 
@@ -541,6 +642,9 @@ const BREAK_ICON='break-icon.png';
 const BREAK_MIN=30;
 const SUN_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
 const MOON_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
+/* 交通費。選択肢は固定、足りなければ「その他」＋区間で補う */
+const TRANSITS=['電車','バス','タクシー','新幹線','飛行機','自家用車','その他'];
 
 const DEPTS=[
   {code:'G',label:'総務'},
@@ -570,6 +674,8 @@ let editingIsBreak=false;
 let modalSelectedCat='';
 const CLOSING_DAY=10;
 let expOffset=0;
+let fareListOpen=false;
+let fareISO=null,fareEditIdx=-1,fareRound=false;
 let calYear=new Date().getFullYear();
 let calMonth=new Date().getMonth();
 let schDate=new Date();schDate.setHours(0,0,0,0);
@@ -725,6 +831,7 @@ function renderCalendar(){
   for(let d=1;d<=daysInMonth;d++){
     const iso=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dayData=data[iso];
+    const fares=(dayData&&Array.isArray(dayData.fares))?dayData.fares:[];
     const taskMins=dayData?calcTaskMinutes(dayData):0;
     const hasWork=taskMins>0;
     const dow=new Date(calYear,calMonth,d).getDay();
@@ -737,11 +844,15 @@ function renderCalendar(){
     if(dow===0)cls+=' sun';
     if(dow===6)cls+=' sat';
     cell.className=cls;
-    cell.innerHTML=`<span class="cal-day">${d}</span>${hasWork?`<span class="cal-hours">${minsToHMS(taskMins)}</span>`:''}`;
+    cell.innerHTML=`<span class="cal-day">${d}</span>${hasWork?`<span class="cal-hours">${minsToHMS(taskMins)}</span>`:''}${fares.length?'<span class="cal-fare-dot"></span>':''}`;
     cell.addEventListener('click',()=>{
+      /* 長押しで交通費ポップを出した直後は日程タブへ飛ばさない */
+      if(fareSuppressClick)return;
+      hideFarePop();
       schDate=new Date(calYear,calMonth,d);
       switchTab('schedule',document.querySelectorAll('.tab')[1]);
     });
+    bindFarePop(cell,iso);
     grid.appendChild(cell);
   }
 
@@ -762,20 +873,21 @@ function renderCalSummary(monthDays,monthMins){
   const closing=calBasis==='closing';
   document.getElementById('basisMonth').classList.toggle('active',!closing);
   document.getElementById('basisClosing').classList.toggle('active',closing);
-  let days=monthDays,mins=monthMins,label;
+  let days=monthDays,mins=monthMins,label,start,end;
   if(closing){
-    const{start,end}=closingRangeOf(calYear,calMonth);
+    ({start,end}=closingRangeOf(calYear,calMonth));
     const agg=aggregateRange(toISO(start),toISO(end));
     days=agg.days;mins=agg.mins;
     const endTxt=start.getFullYear()===end.getFullYear()?fmtDate(end).slice(5):fmtDate(end);
     label=`${fmtDate(start)} – ${endTxt}`;
   }else{
-    const last=new Date(calYear,calMonth+1,0);
-    label=`${fmtDate(new Date(calYear,calMonth,1))} – ${fmtDate(last).slice(5)}`;
+    start=new Date(calYear,calMonth,1);end=new Date(calYear,calMonth+1,0);
+    label=`${fmtDate(start)} – ${fmtDate(end).slice(5)}`;
   }
   document.getElementById('calRange').textContent=label;
   document.getElementById('calDays').textContent=days+'日';
   document.getElementById('calHours').textContent=minsToHMS(mins);
+  renderFareSummary(toISO(start),toISO(end));
 }
 function setCalBasis(b){
   calBasis=b;
@@ -1136,6 +1248,216 @@ function renderTimeline(iso,day){
   const btns=document.createElement('div');btns.className='tl-btns';
   const addBtn=document.createElement('button');addBtn.className='add-task-btn';addBtn.textContent='＋ タスクを追加';addBtn.onclick=()=>openTaskModal(-1,'');
   btns.appendChild(addBtn);el.appendChild(btns);
+}
+
+/* FARE（交通費）— カレンダータブ内で完結。日付ごとに tc_data[iso].fares に持つ */
+function dayFares(iso,data){
+  const d=(data||getStorage())[iso];
+  return (d&&Array.isArray(d.fares))?d.fares:[];
+}
+function fareTotalOf(list){return (list||[]).reduce((s,f)=>s+(f.amount||0),0);}
+function fmtFareYen(n){return '¥'+(n||0).toLocaleString('ja-JP');}
+/* 期間内の交通費を日付順に。各要素は編集用に iso と元の index を持つ */
+function aggregateFares(from,to){
+  const data=getStorage();const entries=[];let total=0;
+  Object.keys(data).sort().forEach(iso=>{
+    if(iso<from||iso>to)return;
+    dayFares(iso,data).forEach((f,i)=>{entries.push({...f,iso,idx:i});total+=f.amount||0;});
+  });
+  return {entries,total};
+}
+function fareMetaText(f){
+  return [f.roundTrip?'往復':'片道',f.purpose,f.transit,f.route].filter(Boolean).join(' ・ ');
+}
+
+/* 交通費ポップ（日付にホバー／長押しで表示し、その日の記入画面を開く） */
+let farePopCtx=null,farePopHideTimer=null,fareLongPressTimer=null,fareSuppressClick=false;
+function hideFarePop(){
+  clearTimeout(farePopHideTimer);farePopHideTimer=null;farePopCtx=null;
+  document.getElementById('farePop').classList.remove('show');
+}
+function showFarePop(clientX,rect,iso){
+  const pop=document.getElementById('farePop');
+  clearTimeout(farePopHideTimer);farePopHideTimer=null;
+  farePopCtx={iso};
+  const list=dayFares(iso);
+  document.getElementById('farePopText').textContent=list.length
+    ? `交通費 ${fmtFareYen(fareTotalOf(list))}（${list.length}件）`
+    : '交通費を記入';
+  pop.classList.add('show');
+  const half=pop.offsetWidth/2;
+  const cx=Math.min(Math.max(clientX,half+6),window.innerWidth-half-6);
+  pop.style.left=cx+'px';
+  pop.style.top=(rect.top-6)+'px';
+  pop.style.setProperty('--arrow-x',Math.min(Math.max(clientX-(cx-half),14),pop.offsetWidth-14)+'px');
+}
+function bindFarePop(cell,iso){
+  cell.addEventListener('mouseenter',e=>showFarePop(e.clientX,cell.getBoundingClientRect(),iso));
+  cell.addEventListener('mouseleave',()=>{farePopHideTimer=setTimeout(hideFarePop,200);});
+  cell.addEventListener('touchstart',ev=>{
+    const cx=ev.touches[0].clientX;
+    clearTimeout(fareLongPressTimer);
+    fareLongPressTimer=setTimeout(()=>{
+      fareSuppressClick=true;setTimeout(()=>{fareSuppressClick=false;},700);
+      showFarePop(cx,cell.getBoundingClientRect(),iso);
+    },450);
+  },{passive:true});
+  ['touchend','touchmove','touchcancel'].forEach(ev=>
+    cell.addEventListener(ev,()=>clearTimeout(fareLongPressTimer),{passive:true}));
+}
+(function(){
+  const pop=document.getElementById('farePop');
+  pop.addEventListener('mouseenter',()=>{clearTimeout(farePopHideTimer);farePopHideTimer=null;});
+  pop.addEventListener('mouseleave',hideFarePop);
+  pop.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(farePopCtx)openFareModal(farePopCtx.iso);
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.fare-pop')&&!e.target.closest('.cal-cell'))hideFarePop();
+  });
+  window.addEventListener('scroll',hideFarePop,{passive:true});
+})();
+
+/* 交通費モーダル（その日ぶんの一覧＋記入フォーム） */
+function openFareModal(iso){
+  hideFarePop();
+  fareISO=iso;
+  const sel=document.getElementById('fTransit');
+  if(!sel.options.length){
+    TRANSITS.forEach(t=>{const op=document.createElement('option');op.value=t;op.textContent=t;sel.appendChild(op);});
+  }
+  const d=new Date(iso+'T00:00:00');
+  document.getElementById('fareModalTitle').textContent=`交通費　${d.getMonth()+1}月${d.getDate()}日（${DAYS_SHORT[d.getDay()]}）`;
+  resetFareForm();
+  renderFareDayList();
+  document.getElementById('fareModal').classList.add('open');
+  setTimeout(()=>document.getElementById('fDest').focus(),100);
+}
+function closeFareModal(){closeModal('fareModal');fareISO=null;fareEditIdx=-1;}
+function resetFareForm(){
+  fareEditIdx=-1;
+  ['fDest','fPurpose','fRoute','fAmount'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fTransit').value=TRANSITS[0];
+  setFareTrip(false);
+  document.getElementById('fareFormSec').textContent='新しい記録';
+}
+function setFareTrip(r){
+  fareRound=!!r;
+  document.getElementById('fTripOne').classList.toggle('active',!fareRound);
+  document.getElementById('fTripRound').classList.toggle('active',fareRound);
+}
+function onFareAmountInput(el){
+  const n=parseYen(el.value);
+  const caretAtEnd=el.selectionStart===el.value.length;
+  el.value=fmtYen(n);
+  if(caretAtEnd)el.setSelectionRange(el.value.length,el.value.length);
+}
+function renderFareDayList(){
+  const list=document.getElementById('fareDayList');list.innerHTML='';
+  const fares=dayFares(fareISO);
+  list.style.display=fares.length?'flex':'none';
+  fares.forEach((f,i)=>{
+    const item=document.createElement('div');
+    item.className='fare-day-item'+(i===fareEditIdx?' editing':'');
+    item.innerHTML=`
+      <div class="fare-info">
+        <div class="fare-dest">${esc(f.dest||'')}</div>
+        <div class="fare-meta">${esc(fareMetaText(f))}</div>
+      </div>
+      <div class="fare-amount">${fmtFareYen(f.amount)}</div>
+      <div class="task-actions">
+        <button class="task-act-btn" title="編集"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="task-act-btn del" title="削除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>`;
+    item.querySelectorAll('.task-act-btn')[0].onclick=()=>editFare(i);
+    item.querySelectorAll('.task-act-btn')[1].onclick=()=>delFare(i);
+    list.appendChild(item);
+  });
+}
+function editFare(i){
+  const f=dayFares(fareISO)[i];if(!f)return;
+  fareEditIdx=i;
+  document.getElementById('fDest').value=f.dest||'';
+  document.getElementById('fPurpose').value=f.purpose||'';
+  document.getElementById('fTransit').value=TRANSITS.includes(f.transit)?f.transit:TRANSITS[TRANSITS.length-1];
+  document.getElementById('fRoute').value=f.route||'';
+  document.getElementById('fAmount').value=fmtYen(f.amount||0);
+  setFareTrip(!!f.roundTrip);
+  document.getElementById('fareFormSec').textContent='記録を編集';
+  renderFareDayList();
+  document.getElementById('fDest').focus();
+}
+function saveFare(){
+  if(!fareISO)return;
+  const dest=document.getElementById('fDest').value.trim();
+  const amount=parseYen(document.getElementById('fAmount').value);
+  if(!dest){showToast('訪問先を入力してください');return;}
+  if(!amount){showToast('金額を入力してください');return;}
+  const rec={
+    dest,
+    purpose:document.getElementById('fPurpose').value.trim(),
+    transit:document.getElementById('fTransit').value,
+    route:document.getElementById('fRoute').value.trim(),
+    roundTrip:fareRound,
+    amount
+  };
+  const{data,day}=getDayData(fareISO);
+  if(!Array.isArray(day.fares))day.fares=[];
+  const editing=fareEditIdx>=0&&day.fares[fareEditIdx];
+  if(editing)day.fares[fareEditIdx]=rec;else day.fares.push(rec);
+  data[fareISO]=day;
+  if(!saveStorage(data)){showToast('保存できませんでした。下の警告をご確認ください');return;}
+  resetFareForm();renderFareDayList();renderCalendar();
+  showToast(editing?'交通費を更新しました':'交通費を追加しました');
+}
+function delFare(i){
+  const{data,day}=getDayData(fareISO);
+  const f=(day.fares||[])[i];if(!f)return;
+  if(!confirm(`${f.dest||'この記録'}（${fmtFareYen(f.amount)}）を削除しますか？`))return;
+  day.fares.splice(i,1);
+  if(!day.fares.length)delete day.fares;
+  data[fareISO]=day;saveStorage(data);
+  /* 編集中の行が消えた／ずれた場合はフォームを新規に戻す */
+  if(fareEditIdx===i)resetFareForm();else if(fareEditIdx>i)fareEditIdx--;
+  renderFareDayList();renderCalendar();showToast('削除しました');
+}
+document.getElementById('fareModal').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.isComposing&&e.target.tagName!=='SELECT')saveFare();
+});
+
+/* カレンダー下の交通費集計（表示中の期間ぶん） */
+function toggleFareList(){
+  fareListOpen=!fareListOpen;
+  document.getElementById('fareSum').classList.toggle('open',fareListOpen);
+  document.getElementById('fareSumHead').setAttribute('aria-expanded',fareListOpen);
+}
+function renderFareSummary(from,to){
+  const sum=document.getElementById('fareSum');if(!sum)return;
+  const{entries,total}=aggregateFares(from,to);
+  sum.classList.toggle('open',fareListOpen);
+  document.getElementById('fareSumHead').setAttribute('aria-expanded',fareListOpen);
+  document.getElementById('fareTotal').textContent=fmtFareYen(total);
+  document.getElementById('fareCount').textContent=entries.length?`${entries.length}件`:'記録なし';
+  const list=document.getElementById('fareList');list.innerHTML='';
+  if(!entries.length){
+    const em=document.createElement('div');em.className='fare-empty';
+    em.textContent='この期間の記録はまだありません';
+    list.appendChild(em);return;
+  }
+  entries.forEach(e=>{
+    const d=new Date(e.iso+'T00:00:00');
+    const row=document.createElement('button');row.type='button';row.className='fare-row';
+    row.innerHTML=`
+      <span class="fare-date">${d.getMonth()+1}/${d.getDate()}</span>
+      <span class="fare-info">
+        <span class="fare-dest">${esc(e.dest||'')}</span>
+        <span class="fare-meta">${esc(fareMetaText(e))}</span>
+      </span>
+      <span class="fare-amount">${fmtFareYen(e.amount)}</span>`;
+    row.onclick=()=>openFareModal(e.iso);
+    list.appendChild(row);
+  });
 }
 
 /* SETTINGS */
