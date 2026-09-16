@@ -343,6 +343,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-stat-label{font-size:clamp(13px,3.4vw,14px);color:var(--text3)}
 .proj-stat-val{font-family:var(--mono);font-size:clamp(15px,4.4vw,19px);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .proj-stat-val.amber{color:var(--amber)}
+.proj-stat-note{font-size:clamp(12px,3.2vw,13px);color:var(--text3);text-align:center;margin-top:-5px}
 .proj-del{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:8px;font-size:17px;border-radius:8px;cursor:pointer;font-family:var(--sans);background:var(--red-soft);border:1px solid var(--red-line);color:var(--red);transition:background .15s}
 .proj-del:hover{background:var(--red-soft);border-color:var(--red)}
 .proj-del svg{width:17px;height:17px}
@@ -1779,6 +1780,7 @@ function renderProjManage(){
           <div class="proj-stat"><span class="proj-stat-label">累計実働</span><span class="proj-stat-val">${mins>0?minsToHMS(mins):'—'}</span></div>
           <div class="proj-stat"><span class="proj-stat-label">概算時給</span><span class="proj-stat-val amber" id="projRate${i}">${rateVal(profit,mins)}</span></div>
         </div>
+        <div class="proj-stat-note">概算時給 ＝ 見込み利益 ÷ 累計実働時間（全期間）</div>
         <button class="proj-del" onclick="removeProject(${i})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
           この案件を削除
