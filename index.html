@@ -182,6 +182,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .trip-btn:hover{color:var(--text2)}
 .trip-btn.active{background:var(--accent);color:var(--accent-fg)}
 
+.place-chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.place-chip{display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:99px;padding:5px 13px;font-size:18px;color:var(--text2);cursor:pointer;background:none;font-family:var(--sans);transition:all .15s;max-width:100%}
+.place-chip:hover{border-color:var(--accent);color:var(--text)}
+.place-chip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.place-chip-amt{font-family:var(--mono);font-size:15px;color:var(--text3);flex-shrink:0}
+.place-edit-item{display:flex;flex-direction:column;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 10px;min-width:0}
+.place-edit-top{display:flex;gap:8px;align-items:center;min-width:0}
+.place-edit-top .t-input{flex:1;min-width:0;font-size:19px;padding:7px 10px}
+.place-edit-row{display:grid;grid-template-columns:1fr 1.25fr;gap:7px;min-width:0}
+.place-edit-row2{display:grid;grid-template-columns:1.1fr 1fr;gap:7px;align-items:center;min-width:0}
+.place-edit-item .place-edit-row .t-input,.place-edit-item .place-edit-row2 .t-input{font-size:17px;padding:7px 10px}
+.place-edit-row2 .trip-switch{padding:2px}
+.place-edit-row2 .trip-btn{font-size:16px;padding:6px 2px}
+.fare-proj{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:15px;color:var(--text3);margin-top:3px;min-width:0}
+.fare-proj span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fare-pdf-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:12px;padding:10px;font-size:18px;color:var(--text2);background:none;border:1px dashed var(--border2);border-radius:9px;cursor:pointer;font-family:var(--sans);transition:all .15s}
 .fare-pdf-btn:hover{color:var(--accent);border-color:var(--accent)}
 .fare-pdf-btn svg{width:17px;height:17px;flex-shrink:0}
@@ -208,9 +223,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
   .ps-table th{background:#eee;font-weight:500;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .ps-table thead{display:table-header-group}
   .ps-c-date{width:19mm;text-align:center;white-space:nowrap}
-  .ps-c-trip{width:13mm;text-align:center}
-  .ps-c-amt{width:22mm;text-align:right;font-variant-numeric:tabular-nums}
-  .ps-c-transit{width:20mm}
+  .ps-c-proj{width:25mm;font-family:var(--mono);font-size:8.5pt}
+  .ps-c-trip{width:12mm;text-align:center}
+  .ps-c-amt{width:21mm;text-align:right;font-variant-numeric:tabular-nums}
+  .ps-c-transit{width:17mm}
   .ps-total td{font-size:11pt;font-weight:700;padding:2.4mm 1.6mm}
   .ps-total .ps-total-label{text-align:right}
   .ps-note{margin-top:6mm;border:.4pt solid #000}
@@ -456,6 +472,11 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
     <h3 id="fareModalTitle">交通費</h3>
     <div class="fare-day-list" id="fareDayList"></div>
     <div class="fare-form-sec" id="fareFormSec">新しい記録</div>
+    <div class="place-chip-row" id="fPlaceRow"></div>
+    <div class="fare-field">
+      <span class="input-label">案件</span>
+      <select class="t-input" id="fProject"></select>
+    </div>
     <div class="fare-field">
       <span class="input-label">訪問先</span>
       <input class="t-input" type="text" id="fDest" maxlength="30" placeholder="例: 〇〇商事 本社">
@@ -530,6 +551,13 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
         <input class="t-input" id="newCatName" placeholder="タスク種別名" maxlength="20">
         <button class="btn btn-ghost" onclick="addCatItem()" style="flex-shrink:0;white-space:nowrap">追加</button>
       </div>
+
+      <div class="set-sec">よく行く行き先</div>
+      <div class="cat-edit-list" id="placeEditList"></div>
+      <button class="add-toggle" onclick="addPlaceItem()">
+        <svg class="add-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        行き先を追加
+      </button>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('settingsModal')">キャンセル</button>
@@ -732,6 +760,8 @@ function deptColor(code){return DEPT_COLORS[deptOf(code)]||DEPT_FALLBACK;}
 
 let cats=[];
 let editCats=[];
+let places=[];
+let editPlaces=[];
 let projects=[];
 let openProjCode=null;
 /* カレンダー下の集計を「1ヶ月」で見るか「11日〜翌10日」で見るか */
@@ -780,6 +810,9 @@ function loadCats(){
   catch(e){cats=DEFAULT_CATS;}
 }
 function saveCats(){if(!lsSet('tc_cats',JSON.stringify(cats)))showToast('保存できませんでした');}
+/* よく行く行き先。交通費入力のひな型として設定から登録する */
+function loadPlaces(){try{const p=JSON.parse(lsGet('tc_places')||'null');places=Array.isArray(p)?p:[];}catch(e){places=[];}}
+function savePlaces(){if(!lsSet('tc_places',JSON.stringify(places)))showToast('保存できませんでした');}
 function loadProjects(){try{const p=JSON.parse(lsGet('tc_projects')||'null');projects=Array.isArray(p)?p:[];}catch(e){projects=[];}}
 function saveProjects(){if(!lsSet('tc_projects',JSON.stringify(projects)))showToast('保存できませんでした');}
 function projByCode(c){return projects.find(p=>p.code===c)||null;}
@@ -1336,6 +1369,42 @@ function aggregateFares(from,to){
   });
   return {entries,total};
 }
+/* 交通費の案件セレクト。登録から消えた番号でも記録済みなら選択肢に残す */
+function buildFareProjects(cur){
+  const sel=document.getElementById('fProject');sel.innerHTML='';
+  const none=document.createElement('option');none.value='';none.textContent='案件なし';sel.appendChild(none);
+  projects.forEach(p=>{
+    const op=document.createElement('option');op.value=p.code;op.textContent=projLabel(p.code);sel.appendChild(op);
+  });
+  if(cur&&!projByCode(cur)){
+    const op=document.createElement('option');op.value=cur;op.textContent=cur+'（未登録）';sel.appendChild(op);
+  }
+  sel.value=cur||'';
+}
+function buildFarePlaces(){
+  const row=document.getElementById('fPlaceRow');row.innerHTML='';
+  row.style.display=places.length?'flex':'none';
+  places.forEach((pl,i)=>{
+    const chip=document.createElement('button');chip.type='button';chip.className='place-chip';
+    chip.innerHTML=`<span class="place-chip-name">${esc(pl.dest)}</span>${pl.amount?`<span class="place-chip-amt">${fmtFareYen(pl.amount)}</span>`:''}`;
+    chip.onclick=()=>applyPlace(i);
+    row.appendChild(chip);
+  });
+}
+/* 行き先を選んだら訪問先・交通機関・区間・区分・金額を埋める。目的と案件は触らない */
+function applyPlace(i){
+  const pl=places[i];if(!pl)return;
+  document.getElementById('fDest').value=pl.dest||'';
+  document.getElementById('fTransit').value=TRANSITS.includes(pl.transit)?pl.transit:TRANSITS[TRANSITS.length-1];
+  document.getElementById('fRoute').value=pl.route||'';
+  setFareTrip(!!pl.roundTrip);
+  document.getElementById('fAmount').value=pl.amount?fmtYen(pl.amount):'';
+  document.getElementById('fPurpose').focus();
+}
+function fareProjHTML(code){
+  if(!code)return '';
+  return `<div class="fare-proj"><span class="proj-dot" style="background:${deptColor(code).bg}"></span><span>${esc(projLabel(code))}</span></div>`;
+}
 function fareMetaText(f){
   return [f.roundTrip?'往復':'片道',f.purpose,f.transit,f.route].filter(Boolean).join(' ・ ');
 }
@@ -1399,6 +1468,7 @@ function openFareModal(iso){
   }
   const d=new Date(iso+'T00:00:00');
   document.getElementById('fareModalTitle').textContent=`交通費　${d.getMonth()+1}月${d.getDate()}日（${DAYS_SHORT[d.getDay()]}）`;
+  buildFarePlaces();
   resetFareForm();
   renderFareDayList();
   document.getElementById('fareModal').classList.add('open');
@@ -1409,6 +1479,7 @@ function resetFareForm(){
   fareEditIdx=-1;
   ['fDest','fPurpose','fRoute','fAmount'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fTransit').value=TRANSITS[0];
+  buildFareProjects('');
   setFareTrip(false);
   document.getElementById('fareFormSec').textContent='新しい記録';
 }
@@ -1417,12 +1488,14 @@ function setFareTrip(r){
   document.getElementById('fTripOne').classList.toggle('active',!fareRound);
   document.getElementById('fTripRound').classList.toggle('active',fareRound);
 }
-function onFareAmountInput(el){
+function onYenInput(el){
   const n=parseYen(el.value);
   const caretAtEnd=el.selectionStart===el.value.length;
   el.value=fmtYen(n);
   if(caretAtEnd)el.setSelectionRange(el.value.length,el.value.length);
+  return n;
 }
+function onFareAmountInput(el){onYenInput(el);}
 function renderFareDayList(){
   const list=document.getElementById('fareDayList');list.innerHTML='';
   const fares=dayFares(fareISO);
@@ -1434,6 +1507,7 @@ function renderFareDayList(){
       <div class="fare-info">
         <div class="fare-dest">${esc(f.dest||'')}</div>
         <div class="fare-meta">${esc(fareMetaText(f))}</div>
+        ${fareProjHTML(f.project)}
       </div>
       <div class="fare-amount">${fmtFareYen(f.amount)}</div>
       <div class="task-actions">
@@ -1453,6 +1527,7 @@ function editFare(i){
   document.getElementById('fTransit').value=TRANSITS.includes(f.transit)?f.transit:TRANSITS[TRANSITS.length-1];
   document.getElementById('fRoute').value=f.route||'';
   document.getElementById('fAmount').value=fmtYen(f.amount||0);
+  buildFareProjects(f.project||'');
   setFareTrip(!!f.roundTrip);
   document.getElementById('fareFormSec').textContent='記録を編集';
   renderFareDayList();
@@ -1472,6 +1547,8 @@ function saveFare(){
     roundTrip:fareRound,
     amount
   };
+  const pc=document.getElementById('fProject').value;
+  if(pc)rec.project=pc;
   const{data,day}=getDayData(fareISO);
   if(!Array.isArray(day.fares))day.fares=[];
   const editing=fareEditIdx>=0&&day.fares[fareEditIdx];
@@ -1523,6 +1600,7 @@ function renderFareSummary(from,to){
       <span class="fare-info">
         <span class="fare-dest">${esc(e.dest||'')}</span>
         <span class="fare-meta">${esc(fareMetaText(e))}</span>
+        ${fareProjHTML(e.project)}
       </span>
       <span class="fare-amount">${fmtFareYen(e.amount)}</span>`;
     row.onclick=()=>openFareModal(e.iso);
@@ -1557,6 +1635,7 @@ function buildPrintSheet(entries,total){
     const d=new Date(e.iso+'T00:00:00');
     return `<tr>
       <td class="ps-c-date">${d.getMonth()+1}/${d.getDate()}（${DAYS_SHORT[d.getDay()]}）</td>
+      <td class="ps-c-proj">${esc(e.project||'')}</td>
       <td>${esc(e.dest||'')}</td>
       <td>${esc(e.purpose||'')}</td>
       <td class="ps-c-transit">${esc(e.transit||'')}</td>
@@ -1581,13 +1660,13 @@ function buildPrintSheet(entries,total){
     </div>
     <table class="ps-table">
       <thead><tr>
-        <th class="ps-c-date">日付</th><th>訪問先</th><th>目的</th>
+        <th class="ps-c-date">日付</th><th class="ps-c-proj">案件番号</th><th>訪問先</th><th>目的</th>
         <th class="ps-c-transit">交通機関</th><th>区間</th>
         <th class="ps-c-trip">区分</th><th class="ps-c-amt">金額</th>
       </tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr class="ps-total">
-        <td class="ps-total-label" colspan="6">合計</td>
+        <td class="ps-total-label" colspan="7">合計</td>
         <td class="ps-c-amt">${fmtFareYen(total)}</td>
       </tr></tfoot>
     </table>
@@ -1600,9 +1679,10 @@ function buildPrintSheet(entries,total){
 
 /* SETTINGS */
 function openSettings(){
-  loadCats();
+  loadCats();loadPlaces();
   editCats=cats.map(c=>({...c}));
-  renderCatEditList();
+  editPlaces=places.map(p=>({...p}));
+  renderCatEditList();renderPlaceEditList();
   document.getElementById('settingsModal').classList.add('open');
 }
 
@@ -1767,6 +1847,53 @@ function renderCatEditList(){
     list.appendChild(item);
   });
 }
+function renderPlaceEditList(){
+  const list=document.getElementById('placeEditList');if(!list)return;
+  list.innerHTML='';
+  if(!editPlaces.length){
+    const em=document.createElement('div');em.className='set-empty';
+    em.textContent='よく行く先を登録すると、交通費入力でワンタップで呼び出せます';
+    list.appendChild(em);return;
+  }
+  editPlaces.forEach((pl,i)=>{
+    const item=document.createElement('div');item.className='place-edit-item';
+    item.innerHTML=`
+      <div class="place-edit-top">
+        <input type="text" class="t-input" value="${esc(pl.dest||'')}" maxlength="30" placeholder="行き先" oninput="editPlaces[${i}].dest=this.value">
+        <button class="del-cat-btn" onclick="removePlaceItem(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="place-edit-row">
+        <select class="t-input" onchange="editPlaces[${i}].transit=this.value">
+          ${TRANSITS.map(t=>`<option value="${t}"${(pl.transit||TRANSITS[0])===t?' selected':''}>${t}</option>`).join('')}
+        </select>
+        <input type="text" class="t-input" value="${esc(pl.route||'')}" maxlength="40" placeholder="区間" oninput="editPlaces[${i}].route=this.value">
+      </div>
+      <div class="place-edit-row2">
+        <div class="trip-switch">
+          <button type="button" class="trip-btn${pl.roundTrip?'':' active'}" onclick="setPlaceTrip(${i},false,this)">片道</button>
+          <button type="button" class="trip-btn${pl.roundTrip?' active':''}" onclick="setPlaceTrip(${i},true,this)">往復</button>
+        </div>
+        <div class="fare-yen-wrap">
+          <span class="fare-yen">¥</span>
+          <input type="text" class="t-input fare-amount-in" inputmode="numeric" maxlength="9" value="${pl.amount?fmtYen(pl.amount):''}" placeholder="0" oninput="editPlaces[${i}].amount=onYenInput(this)">
+        </div>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+function setPlaceTrip(i,round,btn){
+  if(!editPlaces[i])return;
+  editPlaces[i].roundTrip=round;
+  btn.parentNode.querySelectorAll('.trip-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function addPlaceItem(){
+  editPlaces.push({dest:'',transit:TRANSITS[0],route:'',roundTrip:false,amount:0});
+  renderPlaceEditList();
+  const inputs=document.querySelectorAll('#placeEditList .place-edit-top input');
+  if(inputs.length)inputs[inputs.length-1].focus();
+}
+function removePlaceItem(i){editPlaces.splice(i,1);renderPlaceEditList();}
 function addCatItem(){
   const name=document.getElementById('newCatName').value.trim();
   const color=document.getElementById('newCatColor').value;
@@ -1778,6 +1905,15 @@ function saveSettings(){
   const valid=editCats.filter(c=>c.label.trim());
   if(!valid.length){showToast('タスク種別が1つ以上必要です');return;}
   cats=valid;saveCats();
+  /* 行き先は名前が入っているものだけ残す */
+  places=editPlaces.filter(p=>(p.dest||'').trim()).map(p=>({
+    dest:p.dest.trim(),
+    transit:TRANSITS.includes(p.transit)?p.transit:TRANSITS[0],
+    route:(p.route||'').trim(),
+    roundTrip:!!p.roundTrip,
+    amount:parseYen(p.amount)
+  }));
+  savePlaces();
   closeModal('settingsModal');showToast('設定を保存しました');
   renderCalendar();
   if(document.getElementById('tab-schedule').style.display!=='none')renderSchedule();
@@ -1930,7 +2066,7 @@ function init(){
   checkStorage();
   /* 対応ブラウザでは永続扱いを要求して、容量逼迫時の自動削除を避ける */
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});}catch(e){}
-  loadCats();loadProjects();
+  loadCats();loadProjects();loadPlaces();
   if(lsGet('tc_calbasis')==='closing')calBasis='closing';
   updateUserChip();renderCalendar();
   if(!lsGet('tc_name'))openNameModal();
