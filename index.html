@@ -230,7 +230,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
   .ps-table th{background:#eee;font-weight:500;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .ps-table thead{display:table-header-group}
   .ps-c-date{width:17mm;text-align:center;white-space:nowrap}
-  .ps-c-proj{width:23mm;font-family:var(--mono);font-size:7.5pt}
   .ps-c-trip{width:10mm;text-align:center}
   .ps-c-amt{width:18mm;text-align:right;font-variant-numeric:tabular-nums}
   .ps-c-transit{width:15mm}
@@ -1677,8 +1676,9 @@ function doFarePrint(){
   if(!entries.length){showToast('この期間の交通費がありません');return;}
   buildPrintSheet(entries,total);
   closeModal('farePrintModal');
-  /* モーダルが閉じきってからプリント画面へ */
-  setTimeout(()=>{try{window.print();}catch(e){showToast('この環境では印刷できません');}},150);
+  /* クリックと同じ実行の中で呼ぶ。遅らせると Safari に
+     「自動的に印刷することは禁止されています」と止められる */
+  try{window.print();}catch(e){showToast('この環境では印刷できません');}
 }
 function fmtPrintDate(v){
   if(!v)return '';
@@ -1690,7 +1690,6 @@ function buildPrintSheet(entries,total){
     const d=new Date(e.iso+'T00:00:00');
     return `<tr>
       <td class="ps-c-date">${d.getMonth()+1}/${d.getDate()}（${DAYS_SHORT[d.getDay()]}）</td>
-      <td class="ps-c-proj">${esc(e.project||'')}</td>
       <td>${esc(e.dest||'')}</td>
       <td>${esc(e.purpose||'')}</td>
       <td class="ps-c-transit">${esc(e.transit||'')}</td>
@@ -1715,13 +1714,13 @@ function buildPrintSheet(entries,total){
     </div>
     <table class="ps-table">
       <thead><tr>
-        <th class="ps-c-date">日付</th><th class="ps-c-proj">案件番号</th><th>訪問先</th><th>目的</th>
+        <th class="ps-c-date">日付</th><th>訪問先</th><th>目的</th>
         <th class="ps-c-transit">交通機関</th><th>区間</th>
         <th class="ps-c-trip">区分</th><th class="ps-c-amt">金額</th>
       </tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr class="ps-total">
-        <td class="ps-total-label" colspan="7">合計</td>
+        <td class="ps-total-label" colspan="6">合計</td>
         <td class="ps-c-amt">${fmtFareYen(total)}</td>
       </tr></tfoot>
     </table>
