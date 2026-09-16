@@ -138,10 +138,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 
 /* FARE (交通費) */
 .cal-fare-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--blue)}
-.fare-pop{position:fixed;z-index:150;display:none;transform:translate(-50%,-100%);background:var(--blue);color:#fff;border-radius:99px;padding:7px 15px;font-size:17px;font-family:var(--sans);white-space:nowrap;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.4);-webkit-user-select:none;user-select:none;transition:background .15s}
+.fare-pop{position:fixed;z-index:150;display:none;transform:translate(-50%,-100%);background:var(--surface);color:var(--blue);border:1.5px solid var(--blue);border-radius:99px;padding:6px 15px;font-size:17px;font-weight:500;font-family:var(--sans);white-space:nowrap;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.16);-webkit-user-select:none;user-select:none;transition:background .15s,color .15s}
 .fare-pop.show{display:block}
-.fare-pop:hover{background:var(--accent);color:var(--accent-fg)}
-.fare-pop::after{content:'';position:absolute;left:var(--arrow-x,50%);bottom:-4px;width:10px;height:10px;background:inherit;transform:translateX(-50%) rotate(45deg);border-radius:2px}
+.fare-pop:hover{background:var(--blue);color:#fff}
+.fare-pop::after{content:'';position:absolute;left:var(--arrow-x,50%);bottom:-6px;width:10px;height:10px;background:inherit;border-right:1.5px solid var(--blue);border-bottom:1.5px solid var(--blue);transform:translateX(-50%) rotate(45deg);border-radius:0 0 3px 0}
 .fare-pop svg{width:17px;height:17px;vertical-align:-3px;margin-right:5px}
 .cal-hint{font-size:17px;color:var(--text3);text-align:center;margin:-6px 0 14px}
 .fare-sum{border-top:1px solid var(--border);margin-top:16px;padding-top:14px}
@@ -373,7 +373,13 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .proj-sum-code{font-family:var(--mono);font-size:19px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .proj-sum-code.none{font-family:var(--sans);color:var(--text2)}
 .proj-sum-name{font-size:17px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-sum-vals{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0}
 .proj-sum-val{font-family:var(--mono);font-size:24px;color:var(--amber);flex-shrink:0}
+.proj-sum-val.none{color:var(--text3)}
+.proj-sum-fare{font-family:var(--mono);font-size:17px;color:var(--blue)}
+.exp-metrics.three{grid-template-columns:repeat(3,1fr);gap:6px}
+.exp-metrics.three .exp-metric-label{font-size:15px}
+.exp-metrics.three .exp-metric-value{font-size:clamp(17px,5.6vw,25px)}
 .task-proj-d{font-family:var(--mono);font-size:16px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
 
 /* EXPORT PERIOD */
@@ -392,6 +398,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
 .exp-metric-value{font-family:var(--mono);font-size:28px;font-weight:500}
 .exp-metric-value.green{color:var(--green)}
 .exp-metric-value.amber{color:var(--amber)}
+.exp-metric-value.blue{color:var(--blue)}
 .exp-empty{text-align:center;font-size:18px;color:var(--text3);padding:6px 0 14px}
 .exp-all-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:8px;padding:10px;font-size:18px;color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .15s;margin-bottom:10px}
 .exp-all-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -672,7 +679,7 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
         </div>
       </div>
 
-      <div class="sec" style="margin-top:22px">案件別 実働時間</div>
+      <div class="sec" style="margin-top:22px">案件別 実働・交通費</div>
       <div class="export-card">
         <div class="date-row">
           <div class="input-group"><span class="input-label">開始日</span><input class="t-input date-in" type="date" id="repFrom" onchange="renderReport()"></div>
@@ -1001,7 +1008,7 @@ function setCalBasis(b){
 /* 期間集計。出勤日数・実働時間・案件番号ごとの内訳（休憩は除く） */
 function aggregateRange(from,to){
   const data=getStorage();
-  let days=0,mins=0;const projMins=new Map();
+  let days=0,mins=0,fareTotal=0;const projMins=new Map(),projFares=new Map();
   Object.keys(data).forEach(iso=>{
     if(iso<from||iso>to)return;
     const day=data[iso];
@@ -1012,32 +1019,47 @@ function aggregateRange(from,to){
       const v=timeToMin(t.end)-timeToMin(t.start);
       if(v>0)projMins.set(t.project||'',(projMins.get(t.project||'')||0)+v);
     });
+    (day.fares||[]).forEach(f=>{
+      const v=f.amount||0;if(v<=0)return;
+      fareTotal+=v;
+      projFares.set(f.project||'',(projFares.get(f.project||'')||0)+v);
+    });
   });
-  return {days,mins,projMins};
+  return {days,mins,projMins,fareTotal,projFares};
 }
-function projSumCard(projMins){
+/* 実働と交通費を同じ行に。片方しか無い案件も出す */
+function projSumCard(projMins,projFares){
+  const fares=projFares||new Map();
   const card=document.createElement('div');card.className='proj-sum-card';
-  [...projMins.entries()].sort((a,b)=>b[1]-a[1]).forEach(([code,mins])=>{
-    const p=code?projByCode(code):null;
-    const row=document.createElement('div');row.className='proj-sum-row';
-    row.innerHTML=`
-      <div class="proj-sum-info">
-        <div class="proj-sum-head">
-          ${code?`<span class="proj-dot" style="background:${deptColor(code).bg}"></span>`:''}
-          <div class="proj-sum-code${code?'':' none'}">${code?esc(code):'案件未設定'}</div>
+  [...new Set([...projMins.keys(),...fares.keys()])]
+    .sort((a,b)=>((projMins.get(b)||0)-(projMins.get(a)||0))||((fares.get(b)||0)-(fares.get(a)||0)))
+    .forEach(code=>{
+      const mins=projMins.get(code)||0,yen=fares.get(code)||0;
+      const p=code?projByCode(code):null;
+      const row=document.createElement('div');row.className='proj-sum-row';
+      row.innerHTML=`
+        <div class="proj-sum-info">
+          <div class="proj-sum-head">
+            ${code?`<span class="proj-dot" style="background:${deptColor(code).bg}"></span>`:''}
+            <div class="proj-sum-code${code?'':' none'}">${code?esc(code):'案件未設定'}</div>
+          </div>
+          ${p&&p.name?`<div class="proj-sum-name">${esc(p.name)}</div>`:''}
         </div>
-        ${p&&p.name?`<div class="proj-sum-name">${esc(p.name)}</div>`:''}
-      </div>
-      <div class="proj-sum-val">${minsToHMS(mins)}</div>`;
-    card.appendChild(row);
-  });
+        <div class="proj-sum-vals">
+          <div class="proj-sum-val${mins?'':' none'}">${mins?minsToHMS(mins):'—'}</div>
+          ${yen?`<div class="proj-sum-fare">${fmtFareYen(yen)}</div>`:''}
+        </div>`;
+      card.appendChild(row);
+    });
   return card;
 }
-function metricsRow(days,mins){
-  const met=document.createElement('div');met.className='exp-metrics';
+function metricsRow(days,mins,fareTotal){
+  const withFare=fareTotal!==undefined;
+  const met=document.createElement('div');met.className='exp-metrics'+(withFare?' three':'');
   met.innerHTML=`
     <div class="exp-metric"><div class="exp-metric-label">出勤日数</div><div class="exp-metric-value green">${days}日</div></div>
-    <div class="exp-metric"><div class="exp-metric-label">実働時間</div><div class="exp-metric-value amber">${minsToHMS(mins)}</div></div>`;
+    <div class="exp-metric"><div class="exp-metric-label">実働時間</div><div class="exp-metric-value amber">${minsToHMS(mins)}</div></div>`
+    +(withFare?`<div class="exp-metric"><div class="exp-metric-label">交通費</div><div class="exp-metric-value blue">${fmtFareYen(fareTotal)}</div></div>`:'');
   return met;
 }
 
@@ -1959,13 +1981,13 @@ function renderReport(){
     const n=document.createElement('div');n.className='rep-note';n.textContent='開始日が終了日より後になっています';
     wrap.appendChild(n);return;
   }
-  const{days,mins,projMins}=aggregateRange(from,to);
-  if(!days&&!projMins.size){
+  const{days,mins,projMins,fareTotal,projFares}=aggregateRange(from,to);
+  if(!days&&!projMins.size&&!projFares.size){
     const n=document.createElement('div');n.className='rep-note';n.textContent='この期間の記録はまだありません';
     wrap.appendChild(n);return;
   }
-  wrap.appendChild(metricsRow(days,mins));
-  if(projMins.size)wrap.appendChild(projSumCard(projMins));
+  wrap.appendChild(metricsRow(days,mins,fareTotal));
+  if(projMins.size||projFares.size)wrap.appendChild(projSumCard(projMins,projFares));
 }
 
 /* EXPORT / IMPORT */
