@@ -193,7 +193,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .place-edit-item{display:flex;flex-direction:column;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 10px;min-width:0}
 .place-edit-top{display:flex;gap:8px;align-items:center;min-width:0}
 .place-edit-top .t-input{flex:1;min-width:0;font-size:19px;padding:7px 10px}
-.place-edit-row{display:grid;grid-template-columns:1fr 1.25fr;gap:7px;min-width:0}
+.route-row{display:grid;grid-template-columns:1fr auto 1fr;gap:7px;align-items:center;min-width:0}
+.route-arrow{font-size:19px;color:var(--text3);flex-shrink:0}
+.place-edit-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;min-width:0}
 .place-edit-row2{display:grid;grid-template-columns:1.1fr 1fr;gap:7px;align-items:center;min-width:0}
 .place-edit-item .place-edit-row .t-input,.place-edit-item .place-edit-row2 .t-input{font-size:17px;padding:7px 10px}
 .place-edit-row2 .trip-switch{padding:2px}
@@ -502,7 +504,11 @@ select.t-input{appearance:none;-webkit-appearance:none;text-overflow:ellipsis;ba
     </div>
     <div class="fare-field">
       <span class="input-label">区間</span>
-      <input class="t-input" type="text" id="fRoute" maxlength="40" placeholder="例: 郡山 → 東京">
+      <div class="route-row">
+        <input class="t-input" type="text" id="fFrom" maxlength="20" placeholder="出発">
+        <span class="route-arrow">→</span>
+        <input class="t-input" type="text" id="fTo" maxlength="20" placeholder="到着">
+      </div>
     </div>
     <div class="fare-field">
       <span class="input-label">片道 / 往復</span>
@@ -1423,7 +1429,9 @@ function applyPlace(i){
   const pl=places[i];if(!pl)return;
   document.getElementById('fDest').value=pl.dest||'';
   document.getElementById('fTransit').value=TRANSITS.includes(pl.transit)?pl.transit:TRANSITS[TRANSITS.length-1];
-  document.getElementById('fRoute').value=pl.route||'';
+  const plr=routeParts(pl);
+  document.getElementById('fFrom').value=plr.from;
+  document.getElementById('fTo').value=plr.to;
   setFareTrip(!!pl.roundTrip);
   document.getElementById('fAmount').value=pl.amount?fmtYen(pl.amount):'';
   document.getElementById('fPurpose').focus();
@@ -1432,8 +1440,21 @@ function fareProjHTML(code){
   if(!code)return '';
   return `<div class="fare-proj"><span class="proj-dot" style="background:${deptColor(code).bg}"></span><span>${esc(projLabel(code))}</span></div>`;
 }
+/* 旧データは区間を1本の文字列で持っているので、読むときだけ割る */
+function splitRoute(str){
+  const parts=String(str||'').split(/\s*(?:→|->|〜|~|–|—|-)\s*/);
+  return {from:(parts[0]||'').trim(),to:(parts[1]||'').trim()};
+}
+function routeParts(o){
+  if(o&&(o.from||o.to))return {from:o.from||'',to:o.to||''};
+  return splitRoute(o&&o.route);
+}
+function routeText(o){
+  const{from,to}=routeParts(o);
+  return from&&to?`${from} → ${to}`:(from||to||'');
+}
 function fareMetaText(f){
-  return [f.roundTrip?'往復':'片道',f.purpose,f.transit,f.route].filter(Boolean).join(' ・ ');
+  return [f.roundTrip?'往復':'片道',f.purpose,f.transit,routeText(f)].filter(Boolean).join(' ・ ');
 }
 
 /* 交通費ポップ（日付にホバー／長押しで表示し、その日の記入画面を開く） */
@@ -1504,7 +1525,7 @@ function openFareModal(iso){
 function closeFareModal(){closeModal('fareModal');fareISO=null;fareEditIdx=-1;}
 function resetFareForm(){
   fareEditIdx=-1;
-  ['fDest','fPurpose','fRoute','fAmount'].forEach(id=>document.getElementById(id).value='');
+  ['fDest','fPurpose','fFrom','fTo','fAmount'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fTransit').value=TRANSITS[0];
   buildFareProjects('');
   setFareTrip(false);
@@ -1552,7 +1573,9 @@ function editFare(i){
   document.getElementById('fDest').value=f.dest||'';
   document.getElementById('fPurpose').value=f.purpose||'';
   document.getElementById('fTransit').value=TRANSITS.includes(f.transit)?f.transit:TRANSITS[TRANSITS.length-1];
-  document.getElementById('fRoute').value=f.route||'';
+  const fr=routeParts(f);
+  document.getElementById('fFrom').value=fr.from;
+  document.getElementById('fTo').value=fr.to;
   document.getElementById('fAmount').value=fmtYen(f.amount||0);
   buildFareProjects(f.project||'');
   setFareTrip(!!f.roundTrip);
@@ -1570,10 +1593,13 @@ function saveFare(){
     dest,
     purpose:document.getElementById('fPurpose').value.trim(),
     transit:document.getElementById('fTransit').value,
-    route:document.getElementById('fRoute').value.trim(),
     roundTrip:fareRound,
     amount
   };
+  const rFrom=document.getElementById('fFrom').value.trim();
+  const rTo=document.getElementById('fTo').value.trim();
+  if(rFrom)rec.from=rFrom;
+  if(rTo)rec.to=rTo;
   const pc=document.getElementById('fProject').value;
   if(pc)rec.project=pc;
   const{data,day}=getDayData(fareISO);
@@ -1666,7 +1692,7 @@ function buildPrintSheet(entries,total){
       <td>${esc(e.dest||'')}</td>
       <td>${esc(e.purpose||'')}</td>
       <td class="ps-c-transit">${esc(e.transit||'')}</td>
-      <td>${esc(e.route||'')}</td>
+      <td>${esc(routeText(e))}</td>
       <td class="ps-c-trip">${e.roundTrip?'往復':'片道'}</td>
       <td class="ps-c-amt">${fmtFareYen(e.amount)}</td>
     </tr>`;
@@ -1884,27 +1910,30 @@ function renderPlaceEditList(){
     list.appendChild(em);return;
   }
   editPlaces.forEach((pl,i)=>{
+    const pr=routeParts(pl);
     const item=document.createElement('div');item.className='place-edit-item';
     item.innerHTML=`
       <div class="place-edit-top">
         <input type="text" class="t-input" value="${esc(pl.dest||'')}" maxlength="30" placeholder="行き先" oninput="editPlaces[${i}].dest=this.value">
         <button class="del-cat-btn" onclick="removePlaceItem(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
+      <div class="route-row">
+        <input type="text" class="t-input" value="${esc(pr.from)}" maxlength="20" placeholder="出発" oninput="editPlaces[${i}].from=this.value">
+        <span class="route-arrow">→</span>
+        <input type="text" class="t-input" value="${esc(pr.to)}" maxlength="20" placeholder="到着" oninput="editPlaces[${i}].to=this.value">
+      </div>
       <div class="place-edit-row">
         <select class="t-input" onchange="editPlaces[${i}].transit=this.value">
           ${TRANSITS.map(t=>`<option value="${t}"${(pl.transit||TRANSITS[0])===t?' selected':''}>${t}</option>`).join('')}
         </select>
-        <input type="text" class="t-input" value="${esc(pl.route||'')}" maxlength="40" placeholder="区間" oninput="editPlaces[${i}].route=this.value">
-      </div>
-      <div class="place-edit-row2">
-        <div class="trip-switch">
-          <button type="button" class="trip-btn${pl.roundTrip?'':' active'}" onclick="setPlaceTrip(${i},false,this)">片道</button>
-          <button type="button" class="trip-btn${pl.roundTrip?' active':''}" onclick="setPlaceTrip(${i},true,this)">往復</button>
-        </div>
         <div class="fare-yen-wrap">
           <span class="fare-yen">¥</span>
           <input type="text" class="t-input fare-amount-in" inputmode="numeric" maxlength="9" value="${pl.amount?fmtYen(pl.amount):''}" placeholder="0" oninput="editPlaces[${i}].amount=onYenInput(this)">
         </div>
+      </div>
+      <div class="trip-switch">
+        <button type="button" class="trip-btn${pl.roundTrip?'':' active'}" onclick="setPlaceTrip(${i},false,this)">片道</button>
+        <button type="button" class="trip-btn${pl.roundTrip?' active':''}" onclick="setPlaceTrip(${i},true,this)">往復</button>
       </div>`;
     list.appendChild(item);
   });
@@ -1916,7 +1945,7 @@ function setPlaceTrip(i,round,btn){
   btn.classList.add('active');
 }
 function addPlaceItem(){
-  editPlaces.push({dest:'',transit:TRANSITS[0],route:'',roundTrip:false,amount:0});
+  editPlaces.push({dest:'',transit:TRANSITS[0],from:'',to:'',roundTrip:false,amount:0});
   renderPlaceEditList();
   const inputs=document.querySelectorAll('#placeEditList .place-edit-top input');
   if(inputs.length)inputs[inputs.length-1].focus();
@@ -1934,13 +1963,17 @@ function saveSettings(){
   if(!valid.length){showToast('タスク種別が1つ以上必要です');return;}
   cats=valid;saveCats();
   /* 行き先は名前が入っているものだけ残す */
-  places=editPlaces.filter(p=>(p.dest||'').trim()).map(p=>({
-    dest:p.dest.trim(),
-    transit:TRANSITS.includes(p.transit)?p.transit:TRANSITS[0],
-    route:(p.route||'').trim(),
-    roundTrip:!!p.roundTrip,
-    amount:parseYen(p.amount)
-  }));
+  places=editPlaces.filter(p=>(p.dest||'').trim()).map(p=>{
+    const r=routeParts(p);
+    return {
+      dest:p.dest.trim(),
+      transit:TRANSITS.includes(p.transit)?p.transit:TRANSITS[0],
+      from:r.from.trim(),
+      to:r.to.trim(),
+      roundTrip:!!p.roundTrip,
+      amount:parseYen(p.amount)
+    };
+  });
   savePlaces();
   closeModal('settingsModal');showToast('設定を保存しました');
   renderCalendar();
